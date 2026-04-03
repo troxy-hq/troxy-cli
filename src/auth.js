@@ -58,7 +58,7 @@ export async function runLogin({ email } = {}) {
   process.stdout.write('  Verifying... ');
   try {
     const result = await api.verify(token);
-    saveSession({ jwt: result.token, email });
+    saveSession({ jwt: result.access_token, email });
     console.log('✓');
     console.log(`\n  Logged in as ${email}\n`);
   } catch (err) {
