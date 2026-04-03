@@ -105,12 +105,16 @@ export async function runMcp() {
     };
   });
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-
-  // Heartbeat: tell the dashboard this MCP server is active
+  // Heartbeat: tell the dashboard this MCP server is active.
+  // Must be set up before server.connect() since stdio transport keeps the
+  // event loop running but connect() may not return in all environments.
   const sendHeartbeat = () =>
-    api.mcpHeartbeat(apiKey).catch(() => {}); // silent — don't crash MCP on network error
+    api.mcpHeartbeat(apiKey)
+      .then(() => process.stderr.write('[troxy] heartbeat ok\n'))
+      .catch(err => process.stderr.write(`[troxy] heartbeat failed: ${err.message}\n`));
   sendHeartbeat();
   setInterval(sendHeartbeat, 60_000);
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 }

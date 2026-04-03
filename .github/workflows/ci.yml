@@ -35,7 +35,29 @@ jobs:
         run: npm test
 
   # ─────────────────────────────────────────────
-  # PUBLISH — manual only (npm publish locally)
-  # npm's 2FA enforcement blocks token-based CI
-  # publish. Run: npm publish --access public
+  # PUBLISH — runs on version tags (v1.0.2, etc.)
+  # Requires NPM_TOKEN secret (Automation type —
+  # bypasses 2FA). Tag to publish:
+  #   git tag v1.0.2 && git push --tags
   # ─────────────────────────────────────────────
+  publish:
+    name: Publish to npm
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

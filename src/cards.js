@@ -8,17 +8,18 @@ export async function runCards([sub, ...args], flags) {
   switch (sub) {
     case 'list':
     case undefined: {
-      const cards = await api.listCards(jwt);
+      const data = await api.listCards(jwt);
+      const cards = data?.cards || [];
       if (!cards.length) { console.log('\n  No cards yet.\n'); return; }
       console.log();
       table(
-        ['Name', 'Status', 'Budget', 'Used', 'Provider'],
+        ['Name', 'Last 4', 'Status', 'Budget', 'Used'],
         cards.map(c => [
-          c.alias_name,
+          c.name,
+          c.last4 ? `···${c.last4}` : '—',
           c.status,
-          c.monthly_budget ? `$${c.monthly_budget}` : '—',
-          c.budget_used    ? `$${Number(c.budget_used).toFixed(2)}` : '$0.00',
-          c.provider || '—',
+          c.budget ? `$${c.budget}` : 'no limit',
+          `$${Number(c.budget_used || 0).toFixed(2)}`,
         ]),
       );
       break;
@@ -42,8 +43,9 @@ export async function runCards([sub, ...args], flags) {
     case 'delete': {
       const name = flags.name;
       if (!name) { console.error('  --name is required\n'); process.exit(1); }
-      const cards = await api.listCards(jwt);
-      const card  = cards.find(c => c.alias_name === name);
+      const data = await api.listCards(jwt);
+      const cards = data?.cards || [];
+      const card  = cards.find(c => c.name === name);
       if (!card) { console.error(`  Card "${name}" not found\n`); process.exit(1); }
       await api.deleteCard(jwt, card.id);
       console.log(`\n  Card "${name}" deleted ✓\n`);

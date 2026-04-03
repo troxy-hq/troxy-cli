@@ -7,7 +7,8 @@ const DECISION_ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~'
 export async function runActivity(flags) {
   const jwt   = requireJwt();
   const limit = Number(flags.limit || 20);
-  const rows  = await api.activity(jwt, limit);
+  const data  = await api.activity(jwt, limit);
+  const rows  = data?.items || [];
 
   if (!rows.length) { console.log('\n  No activity yet.\n'); return; }
 

@@ -8,7 +8,8 @@ export async function runPolicies([sub, ...args], flags) {
   switch (sub) {
     case 'list':
     case undefined: {
-      const policies = await api.listPolicies(jwt);
+      const data = await api.listPolicies(jwt);
+      const policies = data?.policies || [];
       if (!policies.length) { console.log('\n  No policies yet.\n'); return; }
       console.log();
       table(
@@ -60,7 +61,7 @@ export async function runPolicies([sub, ...args], flags) {
     case 'delete': {
       const name = flags.name;
       if (!name) { console.error('  --name is required\n'); process.exit(1); }
-      const policies = await api.listPolicies(jwt);
+      const { policies = [] } = await api.listPolicies(jwt);
       const policy   = policies.find(p => p.name === name);
       if (!policy) { console.error(`  Policy "${name}" not found\n`); process.exit(1); }
       await api.deletePolicy(jwt, policy.id);
@@ -72,7 +73,7 @@ export async function runPolicies([sub, ...args], flags) {
     case 'disable': {
       const name    = flags.name;
       if (!name) { console.error('  --name is required\n'); process.exit(1); }
-      const policies = await api.listPolicies(jwt);
+      const { policies = [] } = await api.listPolicies(jwt);
       const policy   = policies.find(p => p.name === name);
       if (!policy) { console.error(`  Policy "${name}" not found\n`); process.exit(1); }
       await api.updatePolicy(jwt, policy.id, { enabled: sub === 'enable' });

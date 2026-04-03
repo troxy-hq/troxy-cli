@@ -59,6 +59,14 @@ switch (command) {
     await runActivity(flags);
     break;
 
+  // ── Shorthand: troxy list [cards|policies|activity] ───────────
+  case 'list':
+    if (!sub || sub === 'cards')    { await runCards(['list'], flags); break; }
+    if (sub === 'policies')         { await runPolicies(['list'], flags); break; }
+    if (sub === 'activity')         { await runActivity(flags); break; }
+    console.error(`  Unknown resource: ${sub}. Try: cards, policies, activity\n`);
+    process.exit(1);
+
   // ── Status ────────────────────────────────────────────────────
   case 'status': {
     const health = await api.health();
