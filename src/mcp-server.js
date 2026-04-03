@@ -8,8 +8,9 @@ import { loadConfig }      from './config.js';
 import { evaluatePayment, api } from './api.js';
 
 export async function runMcp() {
-  const config = loadConfig();
-  const apiKey = process.env.TROXY_API_KEY || config?.apiKey;
+  const config    = loadConfig();
+  const apiKey    = process.env.TROXY_API_KEY || config?.apiKey;
+  const agentName = process.env.TROXY_AGENT_NAME || config?.agentName;
 
   if (!apiKey) {
     process.stderr.write(
@@ -70,6 +71,7 @@ export async function runMcp() {
     }
 
     const args   = request.params.arguments ?? {};
+    if (agentName && !args.agent) args.agent = agentName;
     const result = await evaluatePayment(args, apiKey);
 
     if (result.error) {
@@ -109,7 +111,7 @@ export async function runMcp() {
   // Must be set up before server.connect() since stdio transport keeps the
   // event loop running but connect() may not return in all environments.
   const sendHeartbeat = () =>
-    api.mcpHeartbeat(apiKey)
+    api.mcpHeartbeat(apiKey, agentName)
       .then(() => process.stderr.write('[troxy] heartbeat ok\n'))
       .catch(err => process.stderr.write(`[troxy] heartbeat failed: ${err.message}\n`));
   sendHeartbeat();

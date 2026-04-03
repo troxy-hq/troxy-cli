@@ -49,7 +49,7 @@ export const api = {
   evaluate: (body, apiKey) => request('POST', '/evaluate', { apiKey, body }),
 
   // MCP heartbeat (agent API key)
-  mcpHeartbeat: (apiKey) => request('POST', '/mcp/heartbeat', { apiKey }),
+  mcpHeartbeat: (apiKey, agentName) => request('POST', '/mcp/heartbeat', { apiKey, body: agentName ? { agent_name: agentName } : undefined }),
 };
 
 // Named export for backwards compat with init.js + mcp-server.js

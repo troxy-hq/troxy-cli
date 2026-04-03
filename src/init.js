@@ -1,8 +1,14 @@
-import fs   from 'fs';
-import os   from 'os';
-import path from 'path';
+import fs       from 'fs';
+import os       from 'os';
+import path     from 'path';
+import readline from 'readline';
 import { saveConfig }       from './config.js';
 import { evaluatePayment }  from './api.js';
+
+function prompt(question) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise(resolve => rl.question(question, ans => { rl.close(); resolve(ans.trim()); }));
+}
 
 // MCP config locations per client and platform
 const MCP_CLIENTS = [
@@ -66,8 +72,15 @@ export async function runInit({ key } = {}) {
     console.log('✓');
   }
 
+  // Ask for agent name
+  const agentName = await prompt('  What would you like to name this agent? (e.g. "Shopping Bot"): ');
+  if (!agentName) {
+    console.error('\n  Error: agent name is required.\n');
+    process.exit(1);
+  }
+
   // Save config
-  saveConfig({ apiKey: key });
+  saveConfig({ apiKey: key, agentName });
   console.log('  Config saved (~/.troxy/config.json)  ✓');
 
   // Detect and patch MCP clients
