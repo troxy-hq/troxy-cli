@@ -5,7 +5,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { loadConfig }      from './config.js';
-import { evaluatePayment } from './api.js';
+import { evaluatePayment, api } from './api.js';
 
 export async function runMcp() {
   const config = loadConfig();
@@ -107,4 +107,10 @@ export async function runMcp() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  // Heartbeat: tell the dashboard this MCP server is active
+  const sendHeartbeat = () =>
+    api.mcpHeartbeat(apiKey).catch(() => {}); // silent — don't crash MCP on network error
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 60_000);
 }

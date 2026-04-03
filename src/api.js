@@ -47,6 +47,9 @@ export const api = {
 
   // Evaluate (agent API key)
   evaluate: (body, apiKey) => request('POST', '/evaluate', { apiKey, body }),
+
+  // MCP heartbeat (agent API key)
+  mcpHeartbeat: (apiKey) => request('POST', '/mcp/heartbeat', { apiKey }),
 };
 
 // Named export for backwards compat with init.js + mcp-server.js
