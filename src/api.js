@@ -2,19 +2,49 @@ export const BASE_URL =
   process.env.TROXY_API_URL ||
   'https://wuxyx33bka.execute-api.us-east-1.amazonaws.com';
 
-export async function evaluatePayment(payload, apiKey) {
-  const res = await fetch(`${BASE_URL}/evaluate`, {
-    method:  'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Troxy-Key':  apiKey,
-    },
-    body: JSON.stringify(payload),
+async function request(method, path, { apiKey, jwt, body } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers['X-Troxy-Key'] = apiKey;
+  if (jwt)    headers['Authorization'] = `Bearer ${jwt}`;
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
   });
-  return res.json();
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  return data;
 }
 
-export async function checkHealth() {
-  const res = await fetch(`${BASE_URL}/health`);
-  return res.json();
-}
+export const api = {
+  // Auth
+  health:     ()          => request('GET',    '/health'),
+  magicLink:  (email)     => request('POST',   '/auth/magic-link', { body: { email } }),
+  verify:     (token)     => request('POST',   '/auth/verify',     { body: { token } }),
+
+  // Cards
+  listCards:   (jwt)      => request('GET',    '/cards',    { jwt }),
+  createCard:  (jwt, b)   => request('POST',   '/cards',    { jwt, body: b }),
+  updateCard:  (jwt, id, b) => request('PUT',  `/cards/${id}`, { jwt, body: b }),
+  deleteCard:  (jwt, id)  => request('DELETE', `/cards/${id}`, { jwt }),
+
+  // Policies
+  listPolicies:  (jwt)       => request('GET',    '/dashboard/policies',        { jwt }),
+  createPolicy:  (jwt, b)    => request('POST',   '/dashboard/policies',        { jwt, body: b }),
+  updatePolicy:  (jwt, id, b) => request('PATCH', `/dashboard/policies/${id}`,  { jwt, body: b }),
+  deletePolicy:  (jwt, id)   => request('DELETE', `/dashboard/policies/${id}`,  { jwt }),
+
+  // Activity + insights
+  activity:   (jwt, limit) => request('GET', `/dashboard/activity?limit=${limit || 20}`, { jwt }),
+  insights:   (jwt)        => request('GET', '/dashboard/insights', { jwt }),
+
+  // Tokens
+  listTokens:   (jwt)     => request('GET',    '/tokens',        { jwt }),
+  createToken:  (jwt, b)  => request('POST',   '/tokens',        { jwt, body: b }),
+  revokeToken:  (jwt, id) => request('DELETE', `/tokens/${id}`,  { jwt }),
+
+  // Evaluate (agent API key)
+  evaluate: (body, apiKey) => request('POST', '/evaluate', { apiKey, body }),
+};
