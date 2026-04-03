@@ -1,5 +1,5 @@
 {
-  "name": "troxy",
+  "name": "@troxy/cli",
   "version": "0.1.0",
   "description": "AI payment control — protect your agent's payments with policies",
   "type": "module",
