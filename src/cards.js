@@ -1,6 +1,6 @@
 import { api }        from './api.js';
 import { requireJwt } from './auth.js';
-import { table, fmt } from './print.js';
+import { table } from './print.js';
 
 export async function runCards([sub, ...args], flags) {
   const jwt = requireJwt();
