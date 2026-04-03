@@ -48,3 +48,6 @@ export const api = {
   // Evaluate (agent API key)
   evaluate: (body, apiKey) => request('POST', '/evaluate', { apiKey, body }),
 };
+
+// Named export for backwards compat with init.js + mcp-server.js
+export const evaluatePayment = (body, apiKey) => api.evaluate(body, apiKey);
