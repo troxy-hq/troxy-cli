@@ -51,9 +51,19 @@ export async function runLogin({ email } = {}) {
   }
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const token = await new Promise(resolve =>
-    rl.question('  Paste the code from the email: ', ans => { rl.close(); resolve(ans.trim()); })
+  const raw = await new Promise(resolve =>
+    rl.question('  Paste the link or token from the email: ', ans => { rl.close(); resolve(ans.trim()); })
   );
+
+  // Accept either a full URL (right-click → copy link) or a raw token
+  let token = raw;
+  try {
+    const url = new URL(raw);
+    const t = url.searchParams.get('token');
+    if (t) token = t;
+  } catch {
+    // not a URL — use as-is
+  }
 
   process.stdout.write('  Verifying... ');
   try {
