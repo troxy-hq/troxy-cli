@@ -41,23 +41,29 @@ export async function runInit({ key } = {}) {
 
   console.log('\n  Troxy — AI payment control\n');
 
-  // Validate the key by hitting /evaluate (404 card = key is valid)
+  // Validate the key by hitting /evaluate (404 card = key is valid, TypeError = network failure)
   process.stdout.write('  Validating API key...  ');
   try {
-    const result = await evaluatePayment(
-      { agent: 'troxy-init', card_alias: '__ping__', amount: 0 },
+    await evaluatePayment(
+      { agent: 'troxy-init', card_alias_name: '__ping__', amount: 0 },
       key,
     );
-    if (result.error === 'invalid or revoked API key') {
+    console.log('✓');
+  } catch (err) {
+    if (err instanceof TypeError) {
+      // Actual network failure — couldn't reach the API at all
+      console.log('✗');
+      console.error('\n  Error: Could not reach Troxy API. Check your internet connection.\n');
+      process.exit(1);
+    }
+    // API was reachable — check what it said
+    if (err.message?.toLowerCase().includes('invalid') || err.message?.toLowerCase().includes('revoked')) {
       console.log('✗');
       console.error('\n  Error: Invalid or revoked API key.\n');
       process.exit(1);
     }
+    // 404 (card not found) or any other API error = key is valid, API is up
     console.log('✓');
-  } catch {
-    console.log('✗');
-    console.error('\n  Error: Could not reach Troxy API. Check your internet connection.\n');
-    process.exit(1);
   }
 
   // Save config
