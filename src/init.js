@@ -1,9 +1,10 @@
-import fs       from 'fs';
-import os       from 'os';
-import path     from 'path';
-import readline from 'readline';
-import { saveConfig }       from './config.js';
-import { evaluatePayment }  from './api.js';
+import fs             from 'fs';
+import os             from 'os';
+import path           from 'path';
+import readline       from 'readline';
+import { execSync }   from 'child_process';
+import { saveConfig } from './config.js';
+import { evaluatePayment } from './api.js';
 
 function prompt(question) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -109,8 +110,81 @@ export async function runInit({ key } = {}) {
     console.log('\n  Restart your MCP client to activate Troxy.');
   }
 
+  // Install background service so MCP server survives reboots
+  console.log('\n  Setting up background service...');
+  try {
+    installService(key, agentName);
+    console.log('  Background service installed  ✓');
+  } catch (err) {
+    console.log(`  Background service  ✗  (${err.message})`);
+    console.log('  You can start it manually with: troxy mcp &');
+  }
+
   console.log('\n  Your payments are now protected.');
   console.log('  Dashboard → https://dashboard.troxy.ai\n');
+}
+
+function installService(apiKey, agentName) {
+  const platform = process.platform;
+  const troxy    = process.execPath.replace(/node$/, 'troxy') ;
+
+  if (platform === 'linux') {
+    const unit = `[Unit]
+Description=Troxy MCP Server
+After=network.target
+
+[Service]
+ExecStart=${troxy} mcp
+Restart=always
+RestartSec=10
+User=${os.userInfo().username}
+Environment=TROXY_API_KEY=${apiKey}
+Environment=TROXY_AGENT_NAME=${agentName}
+
+[Install]
+WantedBy=multi-user.target
+`;
+    fs.writeFileSync('/tmp/troxy-mcp.service', unit);
+    execSync('sudo mv /tmp/troxy-mcp.service /etc/systemd/system/troxy-mcp.service');
+    execSync('sudo systemctl daemon-reload');
+    execSync('sudo systemctl enable troxy-mcp');
+    execSync('sudo systemctl restart troxy-mcp');
+
+  } else if (platform === 'darwin') {
+    const plist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.troxy.mcp</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>${troxy}</string>
+    <string>mcp</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>TROXY_API_KEY</key>
+    <string>${apiKey}</string>
+    <key>TROXY_AGENT_NAME</key>
+    <string>${agentName}</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+</dict>
+</plist>
+`;
+    const plistPath = path.join(os.homedir(), 'Library/LaunchAgents/ai.troxy.mcp.plist');
+    fs.mkdirSync(path.dirname(plistPath), { recursive: true });
+    fs.writeFileSync(plistPath, plist);
+    try { execSync(`launchctl unload ${plistPath} 2>/dev/null`); } catch {}
+    execSync(`launchctl load ${plistPath}`);
+
+  } else {
+    throw new Error('Auto-start not supported on this platform. Start manually: troxy mcp &');
+  }
 }
 
 function mcpEntry(apiKey) {
