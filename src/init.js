@@ -126,7 +126,12 @@ export async function runInit({ key } = {}) {
 
 function installService(apiKey, agentName) {
   const platform = process.platform;
-  const troxy    = process.execPath.replace(/node$/, 'troxy') ;
+  let troxy;
+  try {
+    troxy = execSync('which troxy').toString().trim();
+  } catch {
+    troxy = '/usr/local/bin/troxy';
+  }
 
   if (platform === 'linux') {
     const unit = `[Unit]
