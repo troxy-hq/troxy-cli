@@ -144,7 +144,7 @@ Restart=always
 RestartSec=10
 User=${os.userInfo().username}
 Environment=TROXY_API_KEY=${apiKey}
-Environment=TROXY_AGENT_NAME=${agentName}
+Environment=TROXY_AGENT_NAME="${agentName}"
 
 [Install]
 WantedBy=multi-user.target
