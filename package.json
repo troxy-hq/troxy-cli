@@ -1,6 +1,6 @@
 {
   "name": "troxy-cli",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "AI payment control — protect your agent's payments with policies",
   "type": "module",
   "bin": {

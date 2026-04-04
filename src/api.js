@@ -1,6 +1,6 @@
 export const BASE_URL =
   process.env.TROXY_API_URL ||
-  'https://wuxyx33bka.execute-api.us-east-1.amazonaws.com';
+  'https://api.troxy.io';
 
 async function request(method, path, { apiKey, jwt, body } = {}) {
   const headers = { 'Content-Type': 'application/json' };
