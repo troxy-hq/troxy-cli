@@ -121,7 +121,7 @@ export async function runInit({ key } = {}) {
   }
 
   console.log('\n  Your payments are now protected.');
-  console.log('  Dashboard → https://dashboard.troxy.ai\n');
+  console.log('  Dashboard → https://dash.troxy.io\n');
 }
 
 function installService(apiKey, agentName) {
@@ -196,7 +196,7 @@ function mcpEntry(apiKey) {
   return {
     troxy: {
       command: 'npx',
-      args:    ['troxy', 'mcp'],
+      args:    ['troxy-cli', 'mcp'],
       env:     { TROXY_API_KEY: apiKey },
     },
   };
