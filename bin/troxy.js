@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { runInit }     from '../src/init.js';
+import { runInit }      from '../src/init.js';
+import { runUninstall } from '../src/uninstall.js';
 import { runMcp }      from '../src/mcp-server.js';
 import { runLogin, clearSession } from '../src/auth.js';
 import { runCards }    from '../src/cards.js';
@@ -29,6 +30,10 @@ switch (command) {
   // ── Setup ─────────────────────────────────────────────────────
   case 'init':
     await runInit(flags);
+    break;
+
+  case 'uninstall':
+    await runUninstall();
     break;
 
   // ── Auth ──────────────────────────────────────────────────────
@@ -84,6 +89,7 @@ switch (command) {
 
   Setup
     npx troxy init --key <api-key>      Initialize and patch MCP clients
+    npx troxy uninstall                 Remove Troxy from this machine
     npx troxy login                     Log in to your dashboard account
     npx troxy logout                    Clear local session
     npx troxy status                    Check API health
