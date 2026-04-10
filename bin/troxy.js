@@ -77,7 +77,22 @@ switch (command) {
     const health = await api.health();
     console.log(`\n  API:  ${health.status === 'ok' ? '✓ online' : '✗ ' + health.status}`);
     console.log(`  DB:   ${health.db}`);
-    console.log(`  Env:  ${health.env}\n`);
+    console.log(`  Env:  ${health.env}`);
+
+    // Check for newer version on npm (best-effort, don't fail if offline)
+    try {
+      const { createRequire } = await import('module');
+      const require = createRequire(import.meta.url);
+      const { version: current } = require('../package.json');
+      const res  = await fetch('https://registry.npmjs.org/troxy-cli/latest', { signal: AbortSignal.timeout(3000) });
+      const { version: latest } = await res.json();
+      if (current !== latest) {
+        console.log(`\n  ⚠  New version available: ${latest} (you have ${current})`);
+        console.log(`     Update with: sudo npm install -g troxy-cli@latest`);
+      }
+    } catch {}
+
+    console.log();
     break;
   }
 
