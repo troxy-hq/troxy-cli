@@ -4,14 +4,33 @@ The official Troxy CLI — onboard AI agents, manage cards and policies from the
 
 ## Prerequisites
 
-Node.js 18+ is required. If `node -v` works, you're good. Otherwise:
+Node.js 18+ is required. Run `node -v` — if you get a version, skip this.
 
-| Platform | Command |
-|----------|---------|
-| Amazon Linux / RHEL | `curl -fsSL https://rpm.nodesource.com/setup_20.x \| sudo bash - && sudo yum install -y nodejs` |
-| Ubuntu / Debian | `curl -fsSL https://deb.nodesource.com/setup_20.x \| sudo bash - && sudo apt-get install -y nodejs` |
-| macOS | `brew install node` |
-| Windows / other | [nodejs.org](https://nodejs.org) |
+**Amazon Linux / RHEL / CentOS**
+```bash
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo yum install -y nodejs
+```
+
+**Ubuntu / Debian**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+sudo apt-get install -y nodejs
+```
+
+**macOS**
+```bash
+brew install node
+```
+
+**Any system (nvm)**
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc
+nvm install --lts
+```
+
+Verify: `node --version` and `npx --version` should both return a version.
 
 ## Install
 
