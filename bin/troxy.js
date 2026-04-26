@@ -127,6 +127,26 @@ switch (command) {
     await runMcp();
     break;
 
+  // ── Simulate a payment evaluation ────────────────────────────
+  case 'pay': {
+    const apiKey   = requireKey(flags);
+    const merchant = flags.merchant;
+    const amount   = parseFloat(flags.amount);
+    const card     = flags.card || 'Work';
+    const category = flags.category;
+    if (!merchant)    { console.error('  --merchant is required\n'); process.exit(1); }
+    if (isNaN(amount)){ console.error('  --amount is required\n');   process.exit(1); }
+    const body = { card_alias: card, merchant_name: merchant, amount, agent: 'troxy-cli' };
+    if (category) body.merchant_category = category;
+    const result = await api.evaluate(body, apiKey);
+    const ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
+    const icon = ICON[result.decision] || '?';
+    console.log(`\n  ${icon} ${result.decision}${result.policy ? `  ←  "${result.policy}"` : '  (default action)'}`);
+    if (result.audit_id) console.log(`  audit: ${result.audit_id}`);
+    console.log();
+    break;
+  }
+
   // ── Resources (read-only: --key or saved config; write: login) ─
   case 'policies':
     await runPolicies(positional, flags);
@@ -237,6 +257,10 @@ switch (command) {
     troxy rotate-key --revoke-old  Same + revoke the old key immediately
     troxy uninstall                Remove Troxy from this machine
     troxy status                   API health + which key is in use
+
+  Simulate
+    troxy pay --merchant "Amazon" --amount 50 --card "Work"
+    troxy pay --merchant "Google" --amount 300 --card "Work" --category software
 
   Inspect  (uses saved key — no flags needed after init)
     troxy policies list
