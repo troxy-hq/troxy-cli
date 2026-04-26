@@ -3,7 +3,6 @@ import { runInit }                     from '../src/init.js';
 import { runUninstall }                from '../src/uninstall.js';
 import { runMcp }                      from '../src/mcp-server.js';
 import { runLogin, clearSession, requireKey, getKeySource } from '../src/auth.js';
-import { runCards }                    from '../src/cards.js';
 import { runPolicies }                 from '../src/policies.js';
 import { runMcps }                     from '../src/mcps.js';
 import { runActivity }                 from '../src/activity.js';
@@ -88,10 +87,6 @@ switch (command) {
     break;
 
   // ── Resources (read-only: --key or saved config; write: login) ─
-  case 'cards':
-    await runCards(positional, flags);
-    break;
-
   case 'policies':
     await runPolicies(positional, flags);
     break;
@@ -134,11 +129,10 @@ switch (command) {
 
   // ── Shorthand: troxy list [resource] ──────────────────────────
   case 'list':
-    if (!sub || sub === 'cards')    { await runCards(['list'], flags);    break; }
-    if (sub === 'policies')         { await runPolicies(['list'], flags); break; }
+    if (!sub || sub === 'policies') { await runPolicies(['list'], flags); break; }
     if (sub === 'mcps')             { await runMcps(['list'], flags);     break; }
     if (sub === 'activity')         { await runActivity(flags);           break; }
-    console.error(`  Unknown resource: ${sub}. Try: cards, policies, mcps, activity\n`);
+    console.error(`  Unknown resource: ${sub}. Try: policies, mcps, activity\n`);
     process.exit(1);
 
   // ── Status ────────────────────────────────────────────────────
@@ -205,7 +199,6 @@ switch (command) {
     troxy policies list
     troxy policies describe --name "Block Amazon"
     troxy mcps list
-    troxy cards list
     troxy activity [--limit 50] [--mine]
     troxy insights [--period 7]
 
@@ -214,8 +207,6 @@ switch (command) {
     troxy policies enable  --name "X"
     troxy policies disable --name "X"
     troxy policies delete  --name "X"
-    troxy cards create --name "Personal" [--budget 500]
-    troxy cards delete --name "Personal"
 
   Override key for a single command:  --key txy-...
 `);
