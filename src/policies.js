@@ -3,7 +3,12 @@ import { requireJwt, requireKey } from './auth.js';
 import { table }             from './print.js';
 
 const DECISION_ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~', TIERED: '⊕' };
-const SCOPE_COLOR   = { 'all MCPs': 'all MCPs', 'this MCP': '→ me', 'other MCPs': 'no MCPs applied' };
+
+function _scope(p) {
+  if (p.global !== false) return 'all MCPs';
+  if (p.mcps && p.mcps.length > 0) return p.mcps.map(m => m.name || m.token_prefix || 'MCP').join(', ');
+  return 'no MCPs applied';
+}
 
 export async function runPolicies([sub, ...args], flags) {
   // Read-only subcommands work with just an API key
@@ -23,7 +28,7 @@ export async function runPolicies([sub, ...args], flags) {
             p.priority,
             p.name,
             p.action,
-            SCOPE_COLOR[p.scope] || p.scope,
+            _scope(p),
             p.enabled ? 'enabled' : 'disabled',
             _condSummary(p),
             p.applies_to_me ? '✓' : '—',
