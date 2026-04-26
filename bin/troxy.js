@@ -81,6 +81,47 @@ switch (command) {
     console.log('\n  Logged out ✓\n');
     break;
 
+  case 'rotate-key': {
+    const jwt = requireJwt();
+    const { loadConfig, saveConfig } = await import('../src/config.js');
+    const oldKey    = loadConfig()?.apiKey;
+    const oldPrefix = oldKey ? oldKey.substring(0, 11) : null;
+    const name      = flags.name || 'Rotated key';
+    const revokeOld = !!flags['revoke-old'];
+
+    process.stdout.write('\n  Creating new key... ');
+    const result    = await api.createToken(jwt, { name });
+    const newKey    = result.key;
+    const newPrefix = result.prefix;
+    console.log('✓');
+
+    saveConfig({ apiKey: newKey });
+    console.log('  Saved to ~/.troxy/config.json ✓');
+
+    if (revokeOld && oldPrefix) {
+      process.stdout.write(`  Revoking old key ${oldPrefix}... `);
+      const { tokens = [] } = await api.listTokens(jwt);
+      const old = tokens.find(t => t.prefix === oldPrefix);
+      if (old) { await api.revokeToken(jwt, old.id); console.log('✓'); }
+      else console.log('(already revoked)');
+    }
+
+    console.log(`
+  Key rotated:
+    Old:  ${oldPrefix ? oldPrefix + '...' : '(none)'}
+    New:  ${newPrefix}...
+
+  New key (shown once — save it now):
+    ${newKey}
+
+  ~/.troxy/config.json updated ✓
+
+  ⚠  If this key runs an MCP, update TROXY_API_KEY in your MCP
+     config and restart the MCP server.
+`);
+    break;
+  }
+
   // ── MCP server (started by MCP clients) ───────────────────────
   case 'mcp':
     await runMcp();
@@ -192,6 +233,8 @@ switch (command) {
   Setup
     troxy connect --key <api-key>  Save API key (CLI only — no MCP setup)
     troxy init --key <api-key>     Full setup: save key + configure MCP
+    troxy rotate-key               Create new key + save it (requires login)
+    troxy rotate-key --revoke-old  Same + revoke the old key immediately
     troxy uninstall                Remove Troxy from this machine
     troxy status                   API health + which key is in use
 
