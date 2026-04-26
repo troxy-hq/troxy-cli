@@ -2,7 +2,7 @@
 import { runInit }                     from '../src/init.js';
 import { runUninstall }                from '../src/uninstall.js';
 import { runMcp }                      from '../src/mcp-server.js';
-import { runLogin, clearSession, requireKey } from '../src/auth.js';
+import { runLogin, clearSession, requireKey, getKeySource } from '../src/auth.js';
 import { runCards }                    from '../src/cards.js';
 import { runPolicies }                 from '../src/policies.js';
 import { runMcps }                     from '../src/mcps.js';
@@ -26,6 +26,26 @@ for (let i = 0; i < allArgs.length; i++) {
   }
 }
 
+try { await _run(); } catch (err) { _handleError(err); }
+
+function _handleError(err) {
+  if (err.code === 'UNAUTHORIZED') {
+    const source = getKeySource();
+    if (source === 'config') {
+      console.error('\n  API key revoked or invalid.');
+      console.error('  Your saved key is no longer accepted by Troxy.');
+      console.error('  Run: npx troxy init --key <new-key>  to reconnect.\n');
+    } else {
+      console.error('\n  API key invalid or revoked.');
+      console.error('  Check the key in your Troxy dashboard → Connections.\n');
+    }
+  } else {
+    console.error(`\n  Error: ${err.message}\n`);
+  }
+  process.exit(1);
+}
+
+async function _run() {
 switch (command) {
   // ── Setup ─────────────────────────────────────────────────────
   case 'init':
@@ -114,11 +134,15 @@ switch (command) {
 
     // If we have a key, show enriched status
     try {
-      const apiKey = requireKey(flags);
-      const data   = await api.agentStatus(apiKey);
+      const apiKey  = requireKey(flags);
+      const source  = getKeySource();
+      const data    = await api.agentStatus(apiKey);
       const { token, account } = data;
+      const keyNote = source === 'config'
+        ? '(saved — run `troxy init` to change)'
+        : source === 'env' ? '(from TROXY_API_KEY env)' : '(passed via --key)';
       console.log(`
-  Token:    ${token.prefix}  (${token.name})
+  Key:      ${token.prefix}  ${keyNote}
   MCP:      ${token.connected ? '● connected' : '○ offline'}  last seen ${token.last_seen}
   Fallback: ${token.default_action}
 
@@ -128,7 +152,7 @@ switch (command) {
     Requests 24h:     ${account.requests_24h}
     Default action:   ${account.default_action}
 `);
-    } catch { console.log(); }
+    } catch (err) { if (err.code === 'UNAUTHORIZED') throw err; console.log(); }
 
     // Version check
     try {
@@ -152,31 +176,32 @@ switch (command) {
     console.log(`
   Troxy — AI payment control
 
-  Read-only commands work with just an API key (--key txy-... or TROXY_API_KEY env).
-  Write commands (create/delete/enable/disable) require: npx troxy login
+  First time on a machine?  Run: npx troxy init --key <api-key>
+  This saves your key to ~/.troxy/config.json — no need to pass --key again.
 
   Setup
-    troxy init --key <api-key>        Initialize agent on this machine
-    troxy uninstall                   Remove Troxy from this machine
-    troxy login                       Log in for write access
-    troxy logout                      Clear session
-    troxy status [--key <key>]        API health + account summary
+    troxy init --key <api-key>   Connect this machine to Troxy (saves key)
+    troxy uninstall              Remove Troxy from this machine
+    troxy status                 API health + which key is in use
 
-  Inspect (API key only — works from EC2)
-    troxy policies list [--key]       All policies with scope + conditions
-    troxy policies describe --name "X" [--key]
-    troxy mcps list [--key]           All MCP connections + status
-    troxy cards list [--key]          Cards with budget usage
-    troxy activity [--key] [--limit 50] [--mine]   Recent decisions
-    troxy insights [--key] [--period 7]             Spend stats
+  Inspect  (uses saved key — no flags needed after init)
+    troxy policies list
+    troxy policies describe --name "Block Amazon"
+    troxy mcps list
+    troxy cards list
+    troxy activity [--limit 50] [--mine]
+    troxy insights [--period 7]
 
-  Manage (requires login)
+  Manage  (requires: npx troxy login)
     troxy policies create --name "X" --action BLOCK --field amount --operator gte --value 500
     troxy policies enable  --name "X"
     troxy policies disable --name "X"
     troxy policies delete  --name "X"
     troxy cards create --name "Personal" [--budget 500]
     troxy cards delete --name "Personal"
+
+  Override key for a single command:  --key txy-...
 `);
     process.exit(command ? 1 : 0);
 }
+} // end _run

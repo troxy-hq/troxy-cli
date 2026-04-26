@@ -14,7 +14,11 @@ async function request(method, path, { apiKey, jwt, body } = {}) {
   });
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(data?.error || `HTTP ${res.status}`);
+    if (res.status === 401) err.code = 'UNAUTHORIZED';
+    throw err;
+  }
   return data;
 }
 

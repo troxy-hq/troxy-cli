@@ -33,17 +33,32 @@ export function requireJwt() {
   return session.jwt;
 }
 
+// Tracks how the last key was resolved — read by bin/troxy.js error handler
+let _lastKeySource = null;
+
+export function getKeySource() { return _lastKeySource; }
+
 /**
- * Resolve API key: --key flag → TROXY_API_KEY env → saved config.
+ * Resolve API key: --key flag → TROXY_API_KEY env → saved config (~/.troxy/config.json).
  * Exits with a helpful message if nothing is found.
  */
 export function requireKey(flags = {}) {
-  const key = flags.key || process.env.TROXY_API_KEY || loadConfig()?.apiKey;
-  if (!key) {
-    console.error('\n  No API key found. Pass --key txy-... or run: npx troxy init\n');
-    process.exit(1);
+  if (flags.key) {
+    _lastKeySource = 'flag';
+    return flags.key;
   }
-  return key;
+  if (process.env.TROXY_API_KEY) {
+    _lastKeySource = 'env';
+    return process.env.TROXY_API_KEY;
+  }
+  const saved = loadConfig()?.apiKey;
+  if (saved) {
+    _lastKeySource = 'config';
+    return saved;
+  }
+  console.error('\n  No API key found.');
+  console.error('  Run: npx troxy init --key txy-...  to connect this machine.\n');
+  process.exit(1);
 }
 
 function loadConfig() {
