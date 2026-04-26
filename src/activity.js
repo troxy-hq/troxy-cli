@@ -1,27 +1,34 @@
-import { api }        from './api.js';
-import { requireJwt } from './auth.js';
-import { table }      from './print.js';
+import { api }               from './api.js';
+import { requireKey }        from './auth.js';
+import { table }             from './print.js';
 
-const DECISION_ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
+const ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
 
 export async function runActivity(flags) {
-  const jwt   = requireJwt();
-  const limit = Number(flags.limit || 20);
-  const data  = await api.activity(jwt, limit);
-  const rows  = data?.items || [];
+  const apiKey = requireKey(flags);
+  const limit  = Number(flags.limit || 20);
+  const mine   = !!flags.mine;
+
+  const data = await api.agentActivity(apiKey, limit, mine);
+  const rows = data?.activity || [];
 
   if (!rows.length) { console.log('\n  No activity yet.\n'); return; }
 
   console.log();
   table(
-    ['Decision', 'Agent', 'Merchant', 'Amount', 'Policy', 'Time'],
-    rows.map(r => [
-      `${DECISION_ICON[r.decision] || ' '} ${r.decision}`,
-      r.agent_name || 'unknown',
-      r.merchant_name || '—',
-      r.amount ? `$${Number(r.amount).toFixed(2)}` : '—',
-      r.policy_name || '—',
-      new Date(r.created_at).toLocaleString(),
-    ]),
+    ['Decision', 'Merchant', 'Category', 'Amount', 'Policy', 'Card', 'Agent', 'When'],
+    rows.map(r => {
+      const icon = ICON[r.decision?.split('→')[0]] || ' ';
+      return [
+        `${icon} ${r.decision}`,
+        r.merchant,
+        r.category,
+        r.amount ? `$${Number(r.amount).toFixed(2)}` : '—',
+        r.policy,
+        r.card,
+        r.agent,
+        r.when,
+      ];
+    }),
   );
 }

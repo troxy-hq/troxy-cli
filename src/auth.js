@@ -33,6 +33,24 @@ export function requireJwt() {
   return session.jwt;
 }
 
+/**
+ * Resolve API key: --key flag → TROXY_API_KEY env → saved config.
+ * Exits with a helpful message if nothing is found.
+ */
+export function requireKey(flags = {}) {
+  const key = flags.key || process.env.TROXY_API_KEY || loadConfig()?.apiKey;
+  if (!key) {
+    console.error('\n  No API key found. Pass --key txy-... or run: npx troxy init\n');
+    process.exit(1);
+  }
+  return key;
+}
+
+function loadConfig() {
+  const p = path.join(os.homedir(), '.troxy', 'config.json');
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; }
+}
+
 /** Interactive magic-link login flow. */
 export async function runLogin({ email } = {}) {
   if (!email) {

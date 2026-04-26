@@ -1,30 +1,34 @@
-import { api }        from './api.js';
-import { requireJwt } from './auth.js';
-import { table } from './print.js';
+import { api }               from './api.js';
+import { requireJwt, requireKey } from './auth.js';
+import { table }             from './print.js';
 
 export async function runCards([sub, ...args], flags) {
+  // list is read-only — works with API key
+  if (!sub || sub === 'list') {
+    const apiKey = requireKey(flags);
+    const data   = await api.agentCards(apiKey);
+    const cards  = data?.cards || [];
+    if (!cards.length) { console.log('\n  No cards yet.\n'); return; }
+    console.log();
+    table(
+      ['Name', 'Last 4', 'Status', 'Budget', 'Used', 'Remaining', 'Default Action'],
+      cards.map(c => [
+        c.name,
+        c.last_four ? `···${c.last_four}` : '—',
+        c.status,
+        c.monthly_budget ? `$${c.monthly_budget}` : 'no limit',
+        `$${Number(c.budget_used || 0).toFixed(2)}`,
+        c.budget_remaining != null ? `$${Number(c.budget_remaining).toFixed(2)}` : '—',
+        c.default_action || 'ALLOW',
+      ]),
+    );
+    return;
+  }
+
+  // Write operations need JWT
   const jwt = requireJwt();
 
   switch (sub) {
-    case 'list':
-    case undefined: {
-      const data = await api.listCards(jwt);
-      const cards = data?.cards || [];
-      if (!cards.length) { console.log('\n  No cards yet.\n'); return; }
-      console.log();
-      table(
-        ['Name', 'Last 4', 'Status', 'Budget', 'Used'],
-        cards.map(c => [
-          c.name,
-          c.last4 ? `···${c.last4}` : '—',
-          c.status,
-          c.budget ? `$${c.budget}` : 'no limit',
-          `$${Number(c.budget_used || 0).toFixed(2)}`,
-        ]),
-      );
-      break;
-    }
-
     case 'create': {
       const name = flags.name;
       if (!name) { console.error('  --name is required\n'); process.exit(1); }
@@ -44,8 +48,7 @@ export async function runCards([sub, ...args], flags) {
       const name = flags.name;
       if (!name) { console.error('  --name is required\n'); process.exit(1); }
       const data = await api.listCards(jwt);
-      const cards = data?.cards || [];
-      const card  = cards.find(c => c.name === name);
+      const card = (data?.cards || []).find(c => c.name === name);
       if (!card) { console.error(`  Card "${name}" not found\n`); process.exit(1); }
       await api.deleteCard(jwt, card.id);
       console.log(`\n  Card "${name}" deleted ✓\n`);
@@ -54,7 +57,7 @@ export async function runCards([sub, ...args], flags) {
 
     default:
       console.error(`  Unknown subcommand: ${sub}`);
-      console.error('  Usage: npx troxy cards [list|create|delete]\n');
+      console.error('  Usage: troxy cards [list|create|delete]\n');
       process.exit(1);
   }
 }

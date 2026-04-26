@@ -50,6 +50,14 @@ export const api = {
 
   // MCP heartbeat (agent API key)
   mcpHeartbeat: (apiKey, agentName) => request('POST', '/mcp/heartbeat', { apiKey, body: agentName ? { agent_name: agentName } : undefined }),
+
+  // Agent read-only API (API key auth — no JWT required)
+  agentStatus:   (apiKey)              => request('GET', '/agent/status',   { apiKey }),
+  agentPolicies: (apiKey)              => request('GET', '/agent/policies',  { apiKey }),
+  agentMcps:     (apiKey)              => request('GET', '/agent/mcps',      { apiKey }),
+  agentCards:    (apiKey)              => request('GET', '/agent/cards',      { apiKey }),
+  agentActivity: (apiKey, limit, mine) => request('GET', `/agent/activity?limit=${limit || 20}${mine ? '&mine=true' : ''}`, { apiKey }),
+  agentInsights: (apiKey, period)      => request('GET', `/agent/insights?period=${period || 30}`, { apiKey }),
 };
 
 // Named export for backwards compat with init.js + mcp-server.js
