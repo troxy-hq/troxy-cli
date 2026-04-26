@@ -3,7 +3,7 @@ import { requireJwt, requireKey } from './auth.js';
 import { table }             from './print.js';
 
 const DECISION_ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~', TIERED: '⊕' };
-const SCOPE_COLOR   = { 'all MCPs': 'all MCPs', 'this MCP': '→ me', 'other MCPs': 'other' };
+const SCOPE_COLOR   = { 'all MCPs': 'all MCPs', 'this MCP': '→ me', 'other MCPs': 'no MCPs applied' };
 
 export async function runPolicies([sub, ...args], flags) {
   // Read-only subcommands work with just an API key
