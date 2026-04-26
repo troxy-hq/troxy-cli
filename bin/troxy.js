@@ -57,6 +57,22 @@ switch (command) {
     break;
 
   // ── Auth ──────────────────────────────────────────────────────
+  case 'connect': {
+    const k = flags.key;
+    if (!k || !k.startsWith('txy-')) {
+      console.error('\n  Usage: troxy connect --key txy-...\n');
+      process.exit(1);
+    }
+    // Validate key before saving
+    process.stdout.write('\n  Validating key... ');
+    await api.agentStatus(k);
+    console.log('✓');
+    const { saveConfig } = await import('../src/config.js');
+    saveConfig({ apiKey: k });
+    console.log('  Key saved to ~/.troxy/config.json\n');
+    break;
+  }
+
   case 'login':
     await runLogin(flags);
     break;
@@ -180,9 +196,10 @@ switch (command) {
   This saves your key to ~/.troxy/config.json — no need to pass --key again.
 
   Setup
-    troxy init --key <api-key>   Connect this machine to Troxy (saves key)
-    troxy uninstall              Remove Troxy from this machine
-    troxy status                 API health + which key is in use
+    troxy connect --key <api-key>  Save API key (CLI only — no MCP setup)
+    troxy init --key <api-key>     Full setup: save key + configure MCP
+    troxy uninstall                Remove Troxy from this machine
+    troxy status                   API health + which key is in use
 
   Inspect  (uses saved key — no flags needed after init)
     troxy policies list
