@@ -2,7 +2,7 @@
 import { runInit }                     from '../src/init.js';
 import { runUninstall }                from '../src/uninstall.js';
 import { runMcp }                      from '../src/mcp-server.js';
-import { runLogin, clearSession, requireKey, getKeySource } from '../src/auth.js';
+import { runLogin, clearSession, requireKey, requireJwt, getKeySource } from '../src/auth.js';
 import { runPolicies }                 from '../src/policies.js';
 import { runMcps }                     from '../src/mcps.js';
 import { runActivity }                 from '../src/activity.js';

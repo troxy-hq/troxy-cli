@@ -126,7 +126,17 @@ function _condSummary(p) {
 }
 
 function _condDetail(p) {
-  const c = p.conditions || [];
-  if (!c.length) return 'none (always matches)';
-  return c.map(x => `${x.field} ${x.operator} ${x.value || ''}${x.value2 ? '–'+x.value2 : ''}`).join(' AND ');
+  const c  = p.conditions    || [];
+  const or = p.or_conditions || [];
+  const parts = [];
+  if (c.length) {
+    parts.push(c.map(x => `${x.field} ${x.operator} ${x.value || ''}${x.value2 ? '–'+x.value2 : ''}`).join(' AND '));
+  }
+  if (or.length) {
+    or.forEach(row => {
+      const conds = (row.conditions || []).map(x => `${x.field} ${x.operator} ${x.value || ''}`).join(' AND ');
+      parts.push(`${row.action}${conds ? ' if ' + conds : ''}`);
+    });
+  }
+  return parts.length ? parts.join('\n             ') : 'none (always matches)';
 }
