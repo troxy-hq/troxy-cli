@@ -251,9 +251,8 @@ switch (command) {
     console.log(`
   Troxy — AI payment control
 
-  First time on a machine?  Run: npx troxy init --key <api-key>
-  MCP setup (once per machine):   troxy init --key <api-key>
-  Login for CLI commands (12h):   troxy login
+  MCP setup (once per machine):  troxy init --key <api-key>
+  Login for CLI commands (12h):  troxy login
 
   MCP Setup
     troxy init --key <api-key>     Connect this machine as an MCP + save key
