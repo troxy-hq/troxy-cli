@@ -1,0 +1,30 @@
+{
+  "name": "troxy-cli",
+  "version": "1.2.7",
+  "description": "AI payment control — protect your agent's payments with policies",
+  "type": "module",
+  "bin": {
+    "troxy": "bin/troxy.js"
+  },
+  "scripts": {
+    "test": "node --test src/tests/*.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "keywords": [
+    "mcp",
+    "ai",
+    "payments",
+    "policy",
+    "agents"
+  ],
+  "license": "MIT"
+}
