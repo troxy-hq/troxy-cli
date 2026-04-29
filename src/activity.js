@@ -24,7 +24,7 @@ export async function runActivity(flags) {
         r.merchant,
         r.category,
         r.amount ? `$${Number(r.amount).toFixed(2)}` : '—',
-        r.policy,
+        r.decision_source === 'budget' ? 'budget limit' : r.policy,
         r.agent,
         r.when,
       ];
