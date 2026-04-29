@@ -39,7 +39,7 @@ export async function runPolicies([sub, ...args], flags) {
 
       case 'describe': {
         const name = flags.name;
-        if (!name) { console.error('  --name is required\n'); process.exit(1); }
+        if (!name) { console.error('  --name is required  (tip: use single quotes for names with special chars)\n'); process.exit(1); }
         const data = await api.agentPolicies(apiKey);
         const p = (data?.policies || []).find(x => x.name.toLowerCase() === name.toLowerCase());
         if (!p) { console.error(`  Policy "${name}" not found\n`); process.exit(1); }
@@ -105,7 +105,16 @@ export async function runPolicies([sub, ...args], flags) {
       const { policies = [] } = await api.listPolicies(jwt);
       const policy = policies.find(p => p.name === name);
       if (!policy) { console.error(`  Policy "${name}" not found\n`); process.exit(1); }
-      await api.updatePolicy(jwt, policy.id, { enabled: sub === 'enable' });
+      await api.updatePolicy(jwt, policy.id, {
+        name:          policy.name,
+        action:        policy.action,
+        description:   policy.description || '',
+        conditions:    policy.conditions || [],
+        or_conditions: policy.or_conditions || [],
+        tiers:         policy.tiers || null,
+        global:        policy.global !== false,
+        enabled:       sub === 'enable',
+      });
       console.log(`\n  Policy "${name}" ${sub}d ✓\n`);
       break;
     }

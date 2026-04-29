@@ -16,7 +16,7 @@ export async function runActivity(flags) {
 
   console.log();
   table(
-    ['Decision', 'Merchant', 'Category', 'Amount', 'Policy', 'Card', 'Agent', 'When'],
+    ['Decision', 'Merchant', 'Category', 'Amount', 'Policy', 'Agent', 'When'],
     rows.map(r => {
       const icon = ICON[r.decision?.split('→')[0]] || ' ';
       return [
@@ -25,7 +25,6 @@ export async function runActivity(flags) {
         r.category,
         r.amount ? `$${Number(r.amount).toFixed(2)}` : '—',
         r.policy,
-        r.card,
         r.agent,
         r.when,
       ];
