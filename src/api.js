@@ -24,9 +24,12 @@ async function request(method, path, { apiKey, jwt, body } = {}) {
 
 export const api = {
   // Auth
-  health:     ()          => request('GET',    '/health'),
-  magicLink:  (email)     => request('POST',   '/auth/magic-link', { body: { email } }),
-  verify:     (token)     => request('POST',   '/auth/verify',     { body: { token } }),
+  health:        ()                    => request('GET',  '/health'),
+  magicLink:     (email)               => request('POST', '/auth/magic-link',    { body: { email } }),
+  verify:        (token)               => request('POST', '/auth/verify',         { body: { token } }),
+  cliStart:      ()                    => request('POST', '/auth/cli/start',      {}),
+  cliAuthorize:  (jwt, session_id)     => request('POST', '/auth/cli/authorize',  { jwt, body: { session_id } }),
+  cliExchange:   (session_id, code)    => request('POST', '/auth/cli/exchange',   { body: { session_id, code } }),
 
   // Cards
   listCards:   (jwt)      => request('GET',    '/cards',    { jwt }),

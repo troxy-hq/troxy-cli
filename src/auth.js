@@ -2,6 +2,7 @@ import fs       from 'fs';
 import os       from 'os';
 import path     from 'path';
 import readline from 'readline';
+import { exec } from 'child_process';
 import { api }  from './api.js';
 
 const SESSION_FILE = path.join(os.homedir(), '.troxy', 'session.json');
@@ -66,34 +67,47 @@ function loadConfig() {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; }
 }
 
-/** Interactive magic-link login flow. */
-export async function runLogin({ email } = {}) {
-  if (!email) {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    email = await new Promise(resolve => rl.question('  Email: ', ans => { rl.close(); resolve(ans.trim()); }));
-  }
+function _openBrowser(url) {
+  const cmd = process.platform === 'darwin' ? `open "${url}"`
+            : process.platform === 'win32'  ? `start "" "${url}"`
+            : `xdg-open "${url}"`;
+  exec(cmd, () => {});
+}
 
-  process.stdout.write(`\n  Sending magic link to ${email}... `);
+/** Device-code login flow — opens browser, user copies code back to CLI. */
+export async function runLogin() {
+  // 1. Start a CLI auth session
+  let session;
   try {
-    await api.magicLink(email);
-    console.log('✓');
+    session = await api.cliStart();
   } catch (err) {
-    console.log('✗');
-    console.error(`  Error: ${err.message}\n`);
+    console.error(`\n  Error starting login: ${err.message}\n`);
     process.exit(1);
   }
 
+  // 2. Open browser
+  console.log('\n  Opening browser to complete login...');
+  console.log(`  If it didn't open, visit:\n  ${session.url}\n`);
+  _openBrowser(session.url);
+
+  // 3. Prompt for the code shown in the browser
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const token = await new Promise(resolve =>
-    rl.question('  Enter the code from your email: ', ans => { rl.close(); resolve(ans.trim()); })
+  const code = await new Promise(resolve =>
+    rl.question('  Paste the code from your browser: ', ans => { rl.close(); resolve(ans.trim()); })
   );
 
+  if (!code) {
+    console.error('\n  No code entered. Run troxy login to try again.\n');
+    process.exit(1);
+  }
+
+  // 4. Exchange code for JWT
   process.stdout.write('  Verifying... ');
   try {
-    const result = await api.verify(token);
-    saveSession({ jwt: result.access_token, email });
+    const result = await api.cliExchange(session.session_id, code);
+    saveSession({ jwt: result.access_token, email: result.email });
     console.log('✓');
-    console.log(`\n  Logged in as ${email}\n`);
+    console.log(`\n  Logged in as ${result.email}  (session valid for 12 hours)\n`);
   } catch (err) {
     console.log('✗');
     console.error(`  Error: ${err.message}\n`);
