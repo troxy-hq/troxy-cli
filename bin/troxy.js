@@ -141,7 +141,8 @@ switch (command) {
     const result = await api.evaluate(body, apiKey);
     const ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
     const icon = ICON[result.decision] || '?';
-    console.log(`\n  ${icon} ${result.decision}${result.policy ? `  ←  "${result.policy}"` : '  (default action)'}`);
+    const suffix = result.policy ? `  ←  "${result.policy}"` : result.reason ? `  —  ${result.reason}` : '  (default action)';
+    console.log(`\n  ${icon} ${result.decision}${suffix}`);
     if (result.audit_id) console.log(`  audit: ${result.audit_id}`);
     console.log();
     break;
