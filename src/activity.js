@@ -1,15 +1,15 @@
 import { api }               from './api.js';
-import { requireKey }        from './auth.js';
+import { requireJwt }        from './auth.js';
 import { table }             from './print.js';
 
 const ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
 
 export async function runActivity(flags) {
-  const apiKey = requireKey(flags);
-  const limit  = Number(flags.limit || 20);
-  const mine   = !!flags.mine;
+  const jwt   = requireJwt();
+  const limit = Number(flags.limit || 20);
+  const mine  = !!flags.mine;
 
-  const data = await api.agentActivity(apiKey, limit, mine);
+  const data = await api.agentActivity(jwt, limit, mine);
   const rows = data?.activity || [];
 
   if (!rows.length) { console.log('\n  No activity yet.\n'); return; }

@@ -2,7 +2,8 @@
 import { runInit }                     from '../src/init.js';
 import { runUninstall }                from '../src/uninstall.js';
 import { runMcp }                      from '../src/mcp-server.js';
-import { runLogin, clearSession, requireKey, requireJwt, getKeySource } from '../src/auth.js';
+import { runLogin, clearSession, requireKey, requireJwt, loadSession, getKeySource } from '../src/auth.js';
+import { loadConfig } from '../src/config.js';
 import { runPolicies }                 from '../src/policies.js';
 import { runMcps }                     from '../src/mcps.js';
 import { runActivity }                 from '../src/activity.js';
@@ -162,9 +163,9 @@ switch (command) {
     break;
 
   case 'insights': {
-    const apiKey = requireKey(flags);
+    const jwt    = requireJwt();
     const period = Number(flags.period || 30);
-    const data   = await api.agentInsights(apiKey, period);
+    const data   = await api.agentInsights(jwt, period);
     const d      = data;
     console.log(`
   Insights — last ${d.period_days} days
@@ -204,27 +205,29 @@ switch (command) {
     process.stdout.write(`  DB:   ${health.db}\n`);
     process.stdout.write(`  Env:  ${health.env}\n`);
 
-    // If we have a key, show enriched status
-    try {
-      const apiKey  = requireKey(flags);
-      const source  = getKeySource();
-      const data    = await api.agentStatus(apiKey);
-      const { token, account } = data;
-      const keyNote = source === 'config'
-        ? '(saved — run `troxy init` to change)'
-        : source === 'env' ? '(from TROXY_API_KEY env)' : '(passed via --key)';
-      console.log(`
-  Key:      ${token.prefix}  ${keyNote}
-  MCP:      ${token.connected ? '● connected' : '○ offline'}  last seen ${token.last_seen}
-  Fallback: ${token.default_action}
-
+    // Account info from login session
+    const session = loadSession();
+    if (session?.jwt) {
+      try {
+        const data = await api.agentStatus(session.jwt);
+        const { account } = data;
+        console.log(`
   Account
     Active policies:  ${account.active_policies}
     MCPs total:       ${account.total_mcps}  (${account.connected_mcps} connected)
     Requests 24h:     ${account.requests_24h}
     Default action:   ${account.default_action}
 `);
-    } catch (err) { if (err.code === 'UNAUTHORIZED') throw err; console.log(); }
+      } catch { console.log(); }
+    } else {
+      console.log('\n  Not logged in. Run: troxy login\n');
+    }
+
+    // MCP connection info from local config (set by troxy init)
+    const localKey = loadConfig()?.apiKey;
+    if (localKey) {
+      console.log(`  MCP key:  ${localKey.substring(0, 12)}...  (saved — run \`troxy init\` to change)\n`);
+    }
 
     // Version check
     try {
@@ -249,34 +252,32 @@ switch (command) {
   Troxy — AI payment control
 
   First time on a machine?  Run: npx troxy init --key <api-key>
-  This saves your key to ~/.troxy/config.json — no need to pass --key again.
+  MCP setup (once per machine):   troxy init --key <api-key>
+  Login for CLI commands (12h):   troxy login
 
-  Setup
-    troxy connect --key <api-key>  Save API key (CLI only — no MCP setup)
-    troxy init --key <api-key>     Full setup: save key + configure MCP
-    troxy rotate-key               Create new key + save it (requires login)
+  MCP Setup
+    troxy init --key <api-key>     Connect this machine as an MCP + save key
+    troxy rotate-key               Create new MCP key + save it
     troxy rotate-key --revoke-old  Same + revoke the old key immediately
     troxy uninstall                Remove Troxy from this machine
-    troxy status                   API health + which key is in use
+    troxy status                   API health + account overview
 
-  Simulate
-    troxy pay --merchant "Amazon" --amount 50 --card "Work"
-    troxy pay --merchant "Google" --amount 300 --card "Work" --category software
-
-  Inspect  (uses saved key — no flags needed after init)
+  Inspect  (requires: troxy login)
     troxy policies list
     troxy policies describe --name "Block Amazon"
     troxy mcps list
     troxy activity [--limit 50] [--mine]
     troxy insights [--period 7]
 
-  Manage  (requires: npx troxy login)
+  Manage  (requires: troxy login)
     troxy policies create --name "X" --action BLOCK --field amount --operator gte --value 500
     troxy policies enable  --name "X"
     troxy policies disable --name "X"
     troxy policies delete  --name "X"
 
-  Override key for a single command:  --key txy-...
+  Simulate  (requires MCP key — run troxy init first)
+    troxy pay --merchant "Amazon" --amount 50 --card "Work"
+    troxy pay --merchant "Google" --amount 300 --card "Work" --category software
 `);
     process.exit(command ? 1 : 0);
 }

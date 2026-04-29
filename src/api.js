@@ -55,13 +55,13 @@ export const api = {
   // MCP heartbeat (agent API key)
   mcpHeartbeat: (apiKey, agentName) => request('POST', '/mcp/heartbeat', { apiKey, body: agentName ? { agent_name: agentName } : undefined }),
 
-  // Agent read-only API (API key auth — no JWT required)
-  agentStatus:   (apiKey)              => request('GET', '/agent/status',   { apiKey }),
-  agentPolicies: (apiKey)              => request('GET', '/agent/policies',  { apiKey }),
-  agentMcps:     (apiKey)              => request('GET', '/agent/mcps',      { apiKey }),
-  agentCards:    (apiKey)              => request('GET', '/agent/cards',      { apiKey }),
-  agentActivity: (apiKey, limit, mine) => request('GET', `/agent/activity?limit=${limit || 20}${mine ? '&mine=true' : ''}`, { apiKey }),
-  agentInsights: (apiKey, period)      => request('GET', `/agent/insights?period=${period || 30}`, { apiKey }),
+  // Agent read-only API (JWT session auth — run: troxy login)
+  agentStatus:   (jwt)              => request('GET', '/agent/status',   { jwt }),
+  agentPolicies: (jwt)              => request('GET', '/agent/policies',  { jwt }),
+  agentMcps:     (jwt)              => request('GET', '/agent/mcps',      { jwt }),
+  agentCards:    (jwt)              => request('GET', '/agent/cards',      { jwt }),
+  agentActivity: (jwt, limit, mine) => request('GET', `/agent/activity?limit=${limit || 20}${mine ? '&mine=true' : ''}`, { jwt }),
+  agentInsights: (jwt, period)      => request('GET', `/agent/insights?period=${period || 30}`, { jwt }),
 };
 
 // Named export for backwards compat with init.js + mcp-server.js

@@ -27,7 +27,7 @@ export function clearSession() {
 export function requireJwt() {
   const session = loadSession();
   if (!session?.jwt) {
-    console.error('\n  Not logged in. Run: npx troxy login\n');
+    console.error('\n  Not logged in. Run: troxy login\n');
     process.exit(1);
   }
   return session.jwt;

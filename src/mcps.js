@@ -1,14 +1,14 @@
-import { api }       from './api.js';
-import { loadConfig } from './config.js';
-import { requireKey } from './auth.js';
-import { table }      from './print.js';
+import { api }        from './api.js';
+import { loadConfig }  from './config.js';
+import { requireJwt }  from './auth.js';
+import { table }       from './print.js';
 
 export async function runMcps([sub], flags) {
-  const apiKey = requireKey(flags);
+  const jwt = requireJwt();
 
   switch (sub || 'list') {
     case 'list': {
-      const data = await api.agentMcps(apiKey);
+      const data = await api.agentMcps(jwt);
       const mcps = data?.mcps || [];
       if (!mcps.length) { console.log('\n  No MCP connections yet.\n'); return; }
       console.log();

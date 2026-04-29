@@ -1,5 +1,5 @@
 import { api }               from './api.js';
-import { requireJwt, requireKey } from './auth.js';
+import { requireJwt } from './auth.js';
 import { table }             from './print.js';
 
 const DECISION_ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~', TIERED: '⊕' };
@@ -11,14 +11,14 @@ function _scope(p) {
 }
 
 export async function runPolicies([sub, ...args], flags) {
-  // Read-only subcommands work with just an API key
+  // Read-only subcommands work with a login session
   const readOnly = !sub || sub === 'list' || sub === 'describe';
 
   if (readOnly) {
-    const apiKey = requireKey(flags);
+    const jwt = requireJwt();
     switch (sub || 'list') {
       case 'list': {
-        const data = await api.agentPolicies(apiKey);
+        const data = await api.agentPolicies(jwt);
         const policies = data?.policies || [];
         if (!policies.length) { console.log('\n  No policies yet.\n'); return; }
         console.log();
@@ -40,7 +40,7 @@ export async function runPolicies([sub, ...args], flags) {
       case 'describe': {
         const name = flags.name;
         if (!name) { console.error('  --name is required  (tip: use single quotes for names with special chars)\n'); process.exit(1); }
-        const data = await api.agentPolicies(apiKey);
+        const data = await api.agentPolicies(jwt);
         const p = (data?.policies || []).find(x => x.name.toLowerCase() === name.toLowerCase());
         if (!p) { console.error(`  Policy "${name}" not found\n`); process.exit(1); }
 
