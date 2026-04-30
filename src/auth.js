@@ -100,11 +100,33 @@ export async function runLogin() {
     _openBrowser(session.url);
   }
 
-  // 3. Prompt for the code shown in the browser
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const code = await new Promise(resolve =>
-    rl.question('  Paste the code from your browser: ', ans => { rl.close(); resolve(ans.trim()); })
-  );
+  // 3. Prompt for the code shown in the browser (masked like a password)
+  const code = await new Promise(resolve => {
+    const rl = readline.createInterface({ input: process.stdin, output: null });
+    process.stdout.write('  Paste the code from your browser: ');
+    let buf = '';
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    const onData = ch => {
+      if (ch === '\r' || ch === '\n') {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener('data', onData);
+        rl.close();
+        process.stdout.write('\n');
+        resolve(buf.trim());
+      } else if (ch === '\u0003') { // Ctrl-C
+        process.stdout.write('\n');
+        process.exit(0);
+      } else if (ch === '\u007f' || ch === '\b') { // backspace
+        buf = buf.slice(0, -1);
+      } else {
+        buf += ch;
+      }
+    };
+    process.stdin.on('data', onData);
+  });
 
   if (!code) {
     console.error('\n  No code entered. Run troxy login to try again.\n');
