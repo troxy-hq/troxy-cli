@@ -31,7 +31,10 @@ try { await _run(); } catch (err) { _handleError(err); }
 function _handleError(err) {
   if (err.code === 'UNAUTHORIZED') {
     const source = getKeySource();
-    if (source === 'config') {
+    if (!source) {
+      // JWT-based command — session expired or not logged in
+      console.error('\n  Session expired or not logged in. Run: troxy login\n');
+    } else if (source === 'config') {
       console.error('\n  API key revoked or invalid.');
       console.error('  Your saved key is no longer accepted by Troxy.');
       console.error('  Run: npx troxy init --key <new-key>  to reconnect.\n');
