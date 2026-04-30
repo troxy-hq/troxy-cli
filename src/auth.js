@@ -68,6 +68,10 @@ function loadConfig() {
 }
 
 function _openBrowser(url) {
+  const isHeadless = process.platform === 'linux'
+    && !process.env.DISPLAY
+    && !process.env.WAYLAND_DISPLAY;
+  if (isHeadless) return;
   const cmd = process.platform === 'darwin' ? `open "${url}"`
             : process.platform === 'win32'  ? `start "" "${url}"`
             : `xdg-open "${url}"`;
@@ -85,10 +89,16 @@ export async function runLogin() {
     process.exit(1);
   }
 
-  // 2. Open browser
-  console.log('\n  Opening browser to complete login...');
-  console.log(`  If it didn't open, visit:\n  ${session.url}\n`);
-  _openBrowser(session.url);
+  // 2. Open browser (or print URL on headless servers)
+  const isHeadless = process.platform === 'linux' && !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
+  if (isHeadless) {
+    console.log('\n  Open this URL in your browser to get a login code:\n');
+    console.log(`  ${session.url}\n`);
+  } else {
+    console.log('\n  Opening browser to complete login...');
+    console.log(`  If it didn't open, visit:\n  ${session.url}\n`);
+    _openBrowser(session.url);
+  }
 
   // 3. Prompt for the code shown in the browser
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });

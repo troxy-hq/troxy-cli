@@ -126,9 +126,11 @@ export async function runPolicies([sub, ...args], flags) {
   }
 }
 
+const _isAny = x => !x.field || x.field === 'any' || x.operator === 'any';
+
 function _condSummary(p) {
-  const c = p.conditions || [];
-  const o = p.or_conditions || [];
+  const c = (p.conditions || []).filter(x => !_isAny(x));
+  const o = (p.or_conditions || []).filter(row => (row.conditions || []).some(x => !_isAny(x)));
   const total = c.length + o.length;
   if (total === 0) return 'always';
   return `${total} condition${total > 1 ? 's' : ''}`;
@@ -138,13 +140,15 @@ function _condDetail(p) {
   const c  = p.conditions    || [];
   const or = p.or_conditions || [];
   const parts = [];
-  if (c.length) {
-    parts.push(c.map(x => `${x.field} ${x.operator} ${x.value || ''}${x.value2 ? '–'+x.value2 : ''}`).join(' AND '));
+  const real = c.filter(x => !_isAny(x));
+  if (real.length) {
+    parts.push(real.map(x => `${x.field} ${x.operator} ${x.value || ''}${x.value2 ? '–'+x.value2 : ''}`).join(' AND '));
   }
   if (or.length) {
     or.forEach(row => {
-      const conds = (row.conditions || []).map(x => `${x.field} ${x.operator} ${x.value || ''}`).join(' AND ');
-      parts.push(`${row.action}${conds ? ' if ' + conds : ''}`);
+      const realConds = (row.conditions || []).filter(x => !_isAny(x));
+      const conds = realConds.map(x => `${x.field} ${x.operator} ${x.value || ''}`).join(' AND ');
+      parts.push(`${row.action || ''}${conds ? ' if ' + conds : ''}`);
     });
   }
   return parts.length ? parts.join('\n             ') : 'none (always matches)';
