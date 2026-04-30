@@ -1,6 +1,6 @@
 # troxy-cli
 
-The official Troxy CLI — onboard AI agents, manage cards and policies from the terminal.
+The official Troxy CLI — onboard AI agents, manage MCPs and policies from the terminal.
 
 ## Prerequisites
 
@@ -48,12 +48,13 @@ npx troxy-cli <command>
 
 | Command | Description |
 |---------|-------------|
-| `troxy init` | Connect an agent to Troxy — validates API key, sets agent name, writes config |
-| `troxy login` | Authenticate via magic-link code (enter the code from your email) |
-| `troxy cards` | List card aliases |
-| `troxy policies` | List policies |
+| `troxy init` | Connect an agent to Troxy — validates API key, sets agent name, patches MCP configs |
+| `troxy login` | Start a 12-hour CLI session (opens browser → copy code → paste into terminal) |
+| `troxy mcps` | List connected MCP agents and their status |
+| `troxy policies` | List and manage policies |
 | `troxy activity` | View recent transaction audit log |
-| `troxy status` | Show current config and connection status |
+| `troxy insights` | Spending stats and decision breakdown |
+| `troxy status` | Show connection status and account overview |
 
 ## How it works
 
@@ -68,10 +69,11 @@ The CLI also ships an MCP server (`src/mcp-server.js`) that exposes Troxy as a t
 
 ## Auth flow
 
-`troxy login` triggers the same magic-link flow as the dashboard:
-- Sends a code to your email
-- Prompts you to enter the `XXXX-XXXX` code in the terminal
-- Stores the JWT locally for subsequent CLI calls
+`troxy login` uses a device-code flow:
+- Opens your browser to the Troxy login page
+- You log in and copy the code shown on the page
+- Paste the code into the terminal
+- Stores the JWT locally for 12 hours
 
 ## Stack
 
