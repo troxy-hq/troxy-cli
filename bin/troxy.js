@@ -140,7 +140,8 @@ switch (command) {
     const category = flags.category;
     if (!merchant)    { console.error('  --merchant is required\n'); process.exit(1); }
     if (isNaN(amount)){ console.error('  --amount is required\n');   process.exit(1); }
-    const body = { card_alias: card, merchant_name: merchant, amount, agent: 'troxy-cli' };
+    const agentName = loadConfig()?.agentName || 'troxy-cli';
+    const body = { card_alias: card, merchant_name: merchant, amount, agent: agentName };
     if (category) body.merchant_category = category;
     const result = await api.evaluate(body, apiKey);
     const ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
