@@ -93,14 +93,16 @@ export async function runLogin() {
   const isHeadless = process.platform === 'linux' && !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
   if (isHeadless) {
     console.log('\n  Open this URL in your browser to get a login code:\n');
-    console.log(`  ${session.url}\n`);
+    console.log(`  ${session.url}`);
+    console.log('\n  (You\'ll need to sign in to your Troxy account, then copy the displayed code.)\n');
   } else {
     console.log('\n  Opening browser to complete login...');
     console.log(`  If it didn't open, visit:\n  ${session.url}\n`);
     _openBrowser(session.url);
   }
 
-  // 3. Prompt for the code shown in the browser (masked like a password)
+  // 3. Prompt for the code shown in the browser (masked like a password,
+  //    one bullet per char so the terminal doesn't look frozen)
   const code = await new Promise(resolve => {
     const rl = readline.createInterface({ input: process.stdin, output: null });
     process.stdout.write('  Paste the code from your browser: ');
@@ -108,21 +110,28 @@ export async function runLogin() {
     process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
-    const onData = ch => {
-      if (ch === '\r' || ch === '\n') {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        process.stdin.removeListener('data', onData);
-        rl.close();
-        process.stdout.write('\n');
-        resolve(buf.trim());
-      } else if (ch === '\u0003') { // Ctrl-C
-        process.stdout.write('\n');
-        process.exit(0);
-      } else if (ch === '\u007f' || ch === '\b') { // backspace
-        buf = buf.slice(0, -1);
-      } else {
-        buf += ch;
+    const onData = chunk => {
+      for (const ch of chunk) {
+        if (ch === '\r' || ch === '\n') {
+          process.stdin.setRawMode(false);
+          process.stdin.pause();
+          process.stdin.removeListener('data', onData);
+          rl.close();
+          process.stdout.write('\n');
+          resolve(buf.trim());
+          return;
+        } else if (ch === '\u0003') { // Ctrl-C
+          process.stdout.write('\n');
+          process.exit(0);
+        } else if (ch === '\u007f' || ch === '\b') { // backspace
+          if (buf.length > 0) {
+            buf = buf.slice(0, -1);
+            process.stdout.write('\b \b');
+          }
+        } else if (ch >= ' ') {
+          buf += ch;
+          process.stdout.write('•');
+        }
       }
     };
     process.stdin.on('data', onData);

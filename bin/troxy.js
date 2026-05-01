@@ -40,7 +40,7 @@ function _handleError(err) {
       console.error('  Run: npx troxy init --key <new-key>  to reconnect.\n');
     } else {
       console.error('\n  API key invalid or revoked.');
-      console.error('  Check the key in your Troxy dashboard → Connections.\n');
+      console.error('  Check the key in your Troxy dashboard → API Keys.\n');
     }
   } else {
     console.error(`\n  Error: ${err.message}\n`);
@@ -254,6 +254,10 @@ switch (command) {
     if (command) console.error(`  Unknown command: ${command}\n`);
     console.log(`
   Troxy — AI payment control
+
+  First time? Run these two commands in order:
+    1) npx troxy-cli init --key txy-...   (get key from https://dash.troxy.io)
+    2) troxy login                         (start a 12h CLI session)
 
   MCP setup (once per machine):  troxy init --key <api-key>
   Login for CLI commands (12h):  troxy login

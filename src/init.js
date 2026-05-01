@@ -73,12 +73,10 @@ export async function runInit({ key } = {}) {
     console.log('✓');
   }
 
-  // Ask for agent name
-  const agentName = await prompt('  What would you like to name this agent? (e.g. "Shopping Bot"): ');
-  if (!agentName) {
-    console.error('\n  Error: agent name is required.\n');
-    process.exit(1);
-  }
+  // Ask for agent name (default to hostname so users don't get stuck)
+  const defaultName = os.hostname() || 'my-agent';
+  const answer = await prompt(`  Name this agent (press Enter for "${defaultName}"): `);
+  const agentName = answer || defaultName;
 
   // Save config
   saveConfig({ apiKey: key, agentName });
@@ -121,7 +119,10 @@ export async function runInit({ key } = {}) {
   }
 
   console.log('\n  Your payments are now protected.');
-  console.log('  Dashboard → https://dash.troxy.io\n');
+  console.log('  Dashboard → https://dash.troxy.io');
+  console.log('\n  Try it:');
+  console.log(`    troxy pay --merchant "Test" --amount 10`);
+  console.log('  This will appear in your dashboard within seconds.\n');
 }
 
 function installService(apiKey, agentName) {
