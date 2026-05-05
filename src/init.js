@@ -15,6 +15,7 @@ function prompt(question) {
 const MCP_CLIENTS = [
   {
     name: 'Claude Desktop',
+    type: 'standard',
     path: {
       darwin: path.join(os.homedir(), 'Library/Application Support/Claude/claude_desktop_config.json'),
       win32:  path.join(process.env.APPDATA || os.homedir(), 'Claude/claude_desktop_config.json'),
@@ -23,6 +24,7 @@ const MCP_CLIENTS = [
   },
   {
     name: 'Cursor',
+    type: 'standard',
     path: {
       darwin: path.join(os.homedir(), '.cursor/mcp.json'),
       win32:  path.join(os.homedir(), '.cursor/mcp.json'),
@@ -31,10 +33,29 @@ const MCP_CLIENTS = [
   },
   {
     name: 'Windsurf',
+    type: 'standard',
     path: {
       darwin: path.join(os.homedir(), '.codeium/windsurf/mcp_config.json'),
       win32:  path.join(os.homedir(), '.codeium/windsurf/mcp_config.json'),
       linux:  path.join(os.homedir(), '.codeium/windsurf/mcp_config.json'),
+    },
+  },
+  {
+    name: 'Zed',
+    type: 'zed',
+    path: {
+      darwin: path.join(os.homedir(), 'Library/Application Support/Zed/settings.json'),
+      win32:  path.join(process.env.APPDATA || os.homedir(), 'Zed/settings.json'),
+      linux:  path.join(os.homedir(), '.config/zed/settings.json'),
+    },
+  },
+  {
+    name: 'Continue',
+    type: 'continue',
+    path: {
+      darwin: path.join(os.homedir(), '.continue/config.json'),
+      win32:  path.join(os.homedir(), '.continue/config.json'),
+      linux:  path.join(os.homedir(), '.continue/config.json'),
     },
   },
 ];
@@ -106,7 +127,9 @@ export async function runInit({ key } = {}) {
     for (const client of detected) {
       const configPath = client.path[platform] ?? client.path.linux;
       try {
-        patchMcpConfig(configPath, key);
+        if (client.type === 'zed')      patchZedConfig(configPath, key);
+        else if (client.type === 'continue') patchContinueConfig(configPath, key);
+        else                            patchMcpConfig(configPath, key);
         console.log(`    • ${client.name}  ✓`);
       } catch (err) {
         console.log(`    • ${client.name}  ✗  (${err.message})`);
@@ -221,14 +244,36 @@ function mcpEntry(apiKey) {
 
 function patchMcpConfig(configPath, apiKey) {
   let config = {};
-  try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch {
-    // file exists but is empty or malformed — start fresh
-  }
-
+  try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch {}
   if (!config.mcpServers) config.mcpServers = {};
   config.mcpServers.troxy = mcpEntry(apiKey).troxy;
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+}
 
+function patchZedConfig(configPath, apiKey) {
+  let config = {};
+  try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch {}
+  if (!config.context_servers) config.context_servers = {};
+  config.context_servers.troxy = {
+    source:  'custom',
+    command: 'npx',
+    args:    ['troxy-cli', 'mcp'],
+    env:     { TROXY_API_KEY: apiKey },
+  };
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+}
+
+function patchContinueConfig(configPath, apiKey) {
+  let config = {};
+  try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch {}
+  if (!config.modelContextProtocolServers) config.modelContextProtocolServers = [];
+  // Remove existing troxy entry if present, then add fresh
+  config.modelContextProtocolServers = config.modelContextProtocolServers.filter(
+    s => !(s.transport?.command === 'npx' && s.transport?.args?.includes('troxy-cli')),
+  );
+  config.modelContextProtocolServers.push({
+    transport: { type: 'stdio', command: 'npx', args: ['troxy-cli', 'mcp'] },
+    env: { TROXY_API_KEY: apiKey },
+  });
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
 }
