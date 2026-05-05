@@ -43,12 +43,8 @@ export async function runMcp() {
           'based on your Troxy policies. Call this before initiating any payment.',
         inputSchema: {
           type: 'object',
-          required: ['card_alias', 'merchant_name', 'amount'],
+          required: ['merchant_name', 'amount'],
           properties: {
-            card_alias: {
-              type: 'string',
-              description: 'Card alias to charge (e.g. "Personal", "Business")',
-            },
             merchant_name: {
               type: 'string',
               description: 'Name of the merchant or service',
