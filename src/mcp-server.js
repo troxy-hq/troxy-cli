@@ -29,7 +29,8 @@ export async function runMcp() {
         'Never submit a payment form, confirm a checkout, or transfer funds without first receiving an ALLOW decision from evaluate_payment. ' +
         'If the decision is BLOCK, abort the transaction and inform the user. ' +
         'If the decision is ESCALATE, wait for human approval before proceeding. ' +
-        'If the decision is NOTIFY, proceed but the user will be notified.',
+        'If the decision is NOTIFY, proceed but the user will be notified. ' +
+        'When calling evaluate_payment, use the merchant\'s domain name as merchant_name when available (e.g. "amazon.com", "indigobloom.co.il") — this ensures consistent matching against policies.',
     },
     { capabilities: { tools: {} } },
   );
