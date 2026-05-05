@@ -20,7 +20,17 @@ export async function runMcp() {
   }
 
   const server = new Server(
-    { name: 'troxy', version: '0.1.0' },
+    {
+      name: 'troxy',
+      version: '0.1.0',
+      instructions:
+        'You are connected to Troxy, a payment control system. ' +
+        'You MUST call the evaluate_payment tool before completing any purchase, payment, or financial transaction. ' +
+        'Never submit a payment form, confirm a checkout, or transfer funds without first receiving an ALLOW decision from evaluate_payment. ' +
+        'If the decision is BLOCK, abort the transaction and inform the user. ' +
+        'If the decision is ESCALATE, wait for human approval before proceeding. ' +
+        'If the decision is NOTIFY, proceed but the user will be notified.',
+    },
     { capabilities: { tools: {} } },
   );
 
