@@ -89,8 +89,15 @@ export async function runInit({ key } = {}) {
     return fs.existsSync(p);
   });
 
-  if (detected.length === 0) {
-    console.log('\n  No MCP clients detected (Claude Desktop, Cursor, Windsurf).');
+  // Detect OpenClaw via CLI
+  let hasOpenClaw = false;
+  try {
+    execSync('openclaw --version', { stdio: 'ignore' });
+    hasOpenClaw = true;
+  } catch {}
+
+  if (detected.length === 0 && !hasOpenClaw) {
+    console.log('\n  No MCP clients detected (Claude Desktop, Cursor, Windsurf, OpenClaw).');
     console.log('  Troxy MCP server config:\n');
     console.log(JSON.stringify(mcpEntry(key), null, 4));
     console.log('\n  Add the above to your MCP client\'s config under "mcpServers".\n');
@@ -103,6 +110,15 @@ export async function runInit({ key } = {}) {
         console.log(`    • ${client.name}  ✓`);
       } catch (err) {
         console.log(`    • ${client.name}  ✗  (${err.message})`);
+      }
+    }
+    if (hasOpenClaw) {
+      try {
+        const entry = JSON.stringify({ command: 'npx', args: ['troxy-cli', 'mcp'], env: { TROXY_API_KEY: key } });
+        execSync(`openclaw mcp set troxy '${entry}'`, { stdio: 'ignore' });
+        console.log(`    • OpenClaw  ✓`);
+      } catch (err) {
+        console.log(`    • OpenClaw  ✗  (${err.message})`);
       }
     }
     console.log('\n  Restart your MCP client to activate Troxy.');
