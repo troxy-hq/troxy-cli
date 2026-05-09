@@ -240,7 +240,21 @@ switch (command) {
     // MCP connection info from local config (set by troxy init)
     const localKey = loadConfig()?.apiKey;
     if (localKey) {
-      console.log(`  MCP key:  ${localKey.substring(0, 12)}...  (saved — run \`troxy init\` to change)\n`);
+      process.stdout.write(`  MCP key:  ${localKey.substring(0, 12)}...`);
+      try {
+        const mcpStatus = await api.mcpStatus(localKey);
+        if (mcpStatus.paused) {
+          process.stdout.write(`  ⏸  PAUSED  (run \`troxy resume\` to resume)\n`);
+        } else {
+          const lastSeen = mcpStatus.mcp_last_seen_at
+            ? `  last seen ${new Date(mcpStatus.mcp_last_seen_at).toLocaleString()}`
+            : '';
+          process.stdout.write(`  ✓ active${lastSeen}\n`);
+        }
+      } catch {
+        process.stdout.write('\n');
+      }
+      console.log();
     }
 
     // Version check
