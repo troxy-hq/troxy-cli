@@ -2,6 +2,7 @@
 import { runInit }                     from '../src/init.js';
 import { runUninstall }                from '../src/uninstall.js';
 import { runMcp }                      from '../src/mcp-server.js';
+import { runPause, runResume }         from '../src/pause.js';
 import { runLogin, clearSession, requireKey, requireJwt, loadSession, getKeySource } from '../src/auth.js';
 import { loadConfig } from '../src/config.js';
 import { runPolicies }                 from '../src/policies.js';
@@ -129,6 +130,15 @@ switch (command) {
   // ── MCP server (started by MCP clients) ───────────────────────
   case 'mcp':
     await runMcp();
+    break;
+
+  // ── Pause / resume payment evaluations ───────────────────────
+  case 'pause':
+    await runPause();
+    break;
+
+  case 'resume':
+    await runResume();
     break;
 
   // ── Simulate a payment evaluation ────────────────────────────
@@ -268,6 +278,8 @@ switch (command) {
     troxy rotate-key --revoke-old  Same + revoke the old key immediately
     troxy uninstall                Remove Troxy from this machine
     troxy status                   API health + account overview
+    troxy pause                    Pause this MCP (blocks all payments until resumed)
+    troxy resume                   Resume this MCP after a pause
 
   Inspect  (requires: troxy login)
     troxy policies list

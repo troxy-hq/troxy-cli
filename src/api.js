@@ -58,6 +58,10 @@ export const api = {
   // MCP heartbeat (agent API key)
   mcpHeartbeat: (apiKey, agentName) => request('POST', '/mcp/heartbeat', { apiKey, body: agentName ? { agent_name: agentName } : undefined }),
 
+  // MCP pause / resume (agent API key)
+  mcpPause:  (apiKey) => request('POST', '/mcp/pause',  { apiKey }),
+  mcpResume: (apiKey) => request('POST', '/mcp/resume', { apiKey }),
+
   // Agent read-only API (JWT session auth — run: troxy login)
   agentStatus:   (jwt)              => request('GET', '/agent/status',   { jwt }),
   agentPolicies: (jwt)              => request('GET', '/agent/policies',  { jwt }),
