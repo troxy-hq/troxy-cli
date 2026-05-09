@@ -213,6 +213,8 @@ WantedBy=multi-user.target
     <string>${apiKey}</string>
     <key>TROXY_AGENT_NAME</key>
     <string>${agentName}</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
   <key>RunAtLoad</key>
   <true/>
