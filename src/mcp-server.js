@@ -28,7 +28,7 @@ export async function runMcp() {
         'You MUST call the evaluate_payment tool before completing any purchase, payment, or financial transaction. ' +
         'Never submit a payment form, confirm a checkout, or transfer funds without first receiving an ALLOW decision from evaluate_payment. ' +
         'If the decision is BLOCK, abort the transaction and inform the user. ' +
-        'If the decision is ESCALATE, wait for human approval before proceeding. ' +
+        'If the decision is ESCALATE, the response includes an approval_token. Wait for the user to approve, then call evaluate_payment again with the same payment details PLUS the approval_token field. The second call will return ALLOW without re-escalating. ' +
         'If the decision is NOTIFY, proceed but the user will be notified. ' +
         'When calling evaluate_payment, use the merchant\'s domain name as merchant_name when available (e.g. "amazon.com", "indigobloom.co.il") — this ensures consistent matching against policies.',
     },
@@ -66,6 +66,10 @@ export async function runMcp() {
               type: 'string',
               description: 'Currency code, defaults to USD (optional)',
             },
+            approval_token: {
+              type: 'string',
+              description: 'Approval token from a previous ESCALATE response. Include this to proceed after the user has approved the payment.',
+            },
           },
         },
       },
@@ -88,7 +92,7 @@ export async function runMcp() {
       };
     }
 
-    const { decision, policy, audit_id } = result;
+    const { decision, policy, audit_id, approval_token } = result;
     let text;
 
     switch (decision) {
@@ -99,7 +103,7 @@ export async function runMcp() {
         text = `✗ Payment blocked by policy "${policy}". Do not proceed with this payment. (audit: ${audit_id})`;
         break;
       case 'ESCALATE':
-        text = `⏳ Payment requires human approval — a request has been sent to the account owner. Do not proceed until approved. (audit: ${audit_id})`;
+        text = `⏳ Payment requires human approval — a request has been sent to the account owner. Do not proceed until approved.\n\nApproval token: ${approval_token}\n\nOnce the owner approves, call evaluate_payment again with the same payment details and include approval_token: "${approval_token}" to proceed. (audit: ${audit_id})`;
         break;
       case 'NOTIFY':
         text = `✓ Payment approved with notification. Policy matched: "${policy}". (audit: ${audit_id})`;
