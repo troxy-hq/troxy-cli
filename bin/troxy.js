@@ -299,6 +299,7 @@ switch (command) {
     troxy policies list
     troxy policies describe --name "Block Amazon"
     troxy mcps list
+    troxy mcps rename --name "new-name"
     troxy activity [--limit 50] [--mine]
     troxy insights [--period 7]
 

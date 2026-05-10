@@ -1,13 +1,12 @@
-import { api }        from './api.js';
-import { loadConfig }  from './config.js';
-import { requireJwt }  from './auth.js';
-import { table }       from './print.js';
+import { api }                    from './api.js';
+import { loadConfig, saveConfig }  from './config.js';
+import { requireJwt }              from './auth.js';
+import { table }                   from './print.js';
 
 export async function runMcps([sub], flags) {
-  const jwt = requireJwt();
-
   switch (sub || 'list') {
     case 'list': {
+      const jwt = requireJwt();
       const data = await api.agentMcps(jwt);
       const mcps = data?.mcps || [];
       if (!mcps.length) { console.log('\n  No MCP connections yet.\n'); return; }
@@ -27,9 +26,29 @@ export async function runMcps([sub], flags) {
       break;
     }
 
+    case 'rename': {
+      const name = flags.name;
+      if (!name) {
+        console.error('\n  Usage: troxy mcps rename --name "new-name"\n');
+        process.exit(1);
+      }
+      const config = loadConfig();
+      const apiKey = process.env.TROXY_API_KEY || config?.apiKey;
+      if (!apiKey) {
+        console.error('\n  No API key found. Run: troxy init --key txy-...\n');
+        process.exit(1);
+      }
+      process.stdout.write(`\n  Renaming MCP to "${name}"... `);
+      await api.mcpRename(apiKey, name);
+      saveConfig({ ...config, agentName: name });
+      console.log('✓');
+      console.log('  Dashboard and future heartbeats will use the new name.\n');
+      break;
+    }
+
     default:
       console.error(`  Unknown subcommand: ${sub}`);
-      console.error('  Usage: troxy mcps [list]\n');
+      console.error('  Usage: troxy mcps [list|rename]\n');
       process.exit(1);
   }
 }

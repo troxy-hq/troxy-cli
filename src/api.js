@@ -58,8 +58,9 @@ export const api = {
   // MCP heartbeat (agent API key)
   mcpHeartbeat: (apiKey, agentName) => request('POST', '/mcp/heartbeat', { apiKey, body: agentName ? { agent_name: agentName } : undefined }),
 
-  // MCP status / pause / resume (agent API key)
-  mcpStatus: (apiKey) => request('GET',  '/mcp/status', { apiKey }),
+  // MCP status / rename / pause / resume (agent API key)
+  mcpStatus:  (apiKey)       => request('GET',   '/mcp/status', { apiKey }),
+  mcpRename:  (apiKey, name) => request('PATCH', '/mcp/name',   { apiKey, body: { name } }),
   mcpPause:  (apiKey) => request('POST', '/mcp/pause',  { apiKey }),
   mcpResume: (apiKey) => request('POST', '/mcp/resume', { apiKey }),
 
