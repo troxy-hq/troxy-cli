@@ -58,11 +58,18 @@ export const api = {
   // MCP heartbeat (agent API key)
   mcpHeartbeat: (apiKey, agentName) => request('POST', '/mcp/heartbeat', { apiKey, body: agentName ? { agent_name: agentName } : undefined }),
 
-  // MCP status / rename / pause / resume (agent API key)
-  mcpStatus:  (apiKey)       => request('GET',   '/mcp/status', { apiKey }),
-  mcpRename:  (apiKey, name) => request('PATCH', '/mcp/name',   { apiKey, body: { name } }),
-  mcpPause:  (apiKey) => request('POST', '/mcp/pause',  { apiKey }),
-  mcpResume: (apiKey) => request('POST', '/mcp/resume', { apiKey }),
+  // MCP status (agent API key — no login needed)
+  mcpStatus:  (apiKey) => request('GET', '/mcp/status', { apiKey }),
+
+  // MCP pause / resume / rename via JWT (requires troxy login)
+  pauseToken:  (jwt, id)       => request('POST',  `/tokens/${id}/pause`,  { jwt }),
+  resumeToken: (jwt, id)       => request('POST',  `/tokens/${id}/resume`, { jwt }),
+  renameToken: (jwt, id, name) => request('PATCH', `/tokens/${id}/name`,   { jwt, body: { name } }),
+
+  // MCP daemon endpoints (agent API key — used by MCP server only)
+  mcpPause:  (apiKey) => request('POST',  '/mcp/pause',  { apiKey }),
+  mcpResume: (apiKey) => request('POST',  '/mcp/resume', { apiKey }),
+  mcpRename: (apiKey, name) => request('PATCH', '/mcp/name', { apiKey, body: { name } }),
 
   // Agent read-only API (JWT session auth — run: troxy login)
   agentStatus:   (jwt)              => request('GET', '/agent/status',   { jwt }),

@@ -143,7 +143,9 @@ switch (command) {
 
   // ── Simulate a payment evaluation ────────────────────────────
   case 'pay': {
-    const apiKey   = requireKey(flags);
+    requireJwt();
+    const apiKey   = loadConfig()?.apiKey || process.env.TROXY_API_KEY;
+    if (!apiKey) { console.error('  No API key. Run: troxy init --key txy-...\n'); process.exit(1); }
     const merchant = flags.merchant;
     const amount   = parseFloat(flags.amount);
     const card     = flags.card || 'Work';
@@ -286,30 +288,36 @@ switch (command) {
   MCP setup (once per machine):  troxy init --key <api-key>
   Login for CLI commands (12h):  troxy login
 
-  MCP Setup
+  Setup (one time, API key required)
     troxy init --key <api-key>     Connect this machine as an MCP + save key
-    troxy rotate-key               Create new MCP key + save it
-    troxy rotate-key --revoke-old  Same + revoke the old key immediately
     troxy uninstall                Remove Troxy from this machine
-    troxy status                   API health + account overview
-    troxy pause                    Pause this MCP (blocks all payments until resumed)
-    troxy resume                   Resume this MCP after a pause
+    troxy status                   API health + MCP status (no login needed)
 
-  Inspect  (requires: troxy login)
+  Everything else requires: troxy login
+
+  MCP
+    troxy pause                    Pause this MCP (blocks all payments)
+    troxy resume                   Resume this MCP
+    troxy mcps list                All MCPs in your account
+    troxy mcps rename --name "x"   Rename this machine's MCP
+
+  Keys
+    troxy rotate-key               Create new MCP key + save it locally
+    troxy rotate-key --revoke-old  Same + revoke the old key immediately
+
+  Policies
     troxy policies list
     troxy policies describe --name "Block Amazon"
-    troxy mcps list
-    troxy mcps rename --name "new-name"
-    troxy activity [--limit 50] [--mine]
-    troxy insights [--period 7]
-
-  Manage  (requires: troxy login)
     troxy policies create --name "X" --action BLOCK --field amount --operator gte --value 500
     troxy policies enable  --name "X"
     troxy policies disable --name "X"
     troxy policies delete  --name "X"
 
-  Simulate  (requires MCP key — run troxy init first)
+  Activity & insights
+    troxy activity [--limit 50] [--mine]
+    troxy insights [--period 7]
+
+  Simulate
     troxy pay --merchant "Amazon" --amount 50 --card "Work"
     troxy pay --merchant "Google" --amount 300 --card "Work" --category software
 `);

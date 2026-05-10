@@ -28,18 +28,16 @@ export async function runMcps([sub], flags) {
 
     case 'rename': {
       const name = flags.name;
-      if (!name) {
-        console.error('\n  Usage: troxy mcps rename --name "new-name"\n');
-        process.exit(1);
-      }
+      if (!name) { console.error('\n  Usage: troxy mcps rename --name "new-name"\n'); process.exit(1); }
+      const jwt = requireJwt();
       const config = loadConfig();
-      const apiKey = process.env.TROXY_API_KEY || config?.apiKey;
-      if (!apiKey) {
-        console.error('\n  No API key found. Run: troxy init --key txy-...\n');
-        process.exit(1);
-      }
+      const prefix = (config?.apiKey || '').substring(0, 11);
+      if (!prefix) { console.error('\n  No API key found. Run: troxy init --key txy-...\n'); process.exit(1); }
       process.stdout.write(`\n  Renaming MCP to "${name}"... `);
-      await api.mcpRename(apiKey, name);
+      const { tokens = [] } = await api.listTokens(jwt);
+      const tok = tokens.find(t => t.prefix === prefix);
+      if (!tok) { console.error('\nCould not find this machine\'s MCP. Run: troxy init --key txy-...\n'); process.exit(1); }
+      await api.renameToken(jwt, tok.id, name);
       saveConfig({ ...config, agentName: name });
       console.log('✓');
       console.log('  Dashboard and future heartbeats will use the new name.\n');
