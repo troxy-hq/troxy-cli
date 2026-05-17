@@ -10,7 +10,21 @@ function _scope(p) {
   return 'no MCPs applied';
 }
 
+const HELP = {
+  list:     `  troxy policies list\n\n  Lists all policies in your account with their action, scope, status, and conditions.\n`,
+  describe: `  troxy policies describe --name <policy-name>\n\n  Shows full details for a single policy.\n\n  Options:\n    --name   Name of the policy (use single quotes for names with special chars)\n`,
+  create:   `  troxy policies create --name <name> --action <action> [options]\n\n  Creates a new policy. Login required.\n\n  Required:\n    --name     Policy name\n    --action   ALLOW, BLOCK, NOTIFY, or ESCALATE\n\n  Optional conditions:\n    --field      Field to match: amount, merchant_name, merchant_category,\n                 merchant_country, currency, agent_name, hour, day_of_week\n    --operator   eq, neq, gt, gte, lt, lte, contains, between\n    --value      Comparison value (e.g. 500, amazon, Monday)\n    --value2     Upper bound for 'between' operator\n\n  Scope:\n    --mcp <name>   Scope policy to a specific MCP only (default: all MCPs)\n                   Run 'troxy mcps list' to see MCP names.\n\n  Examples:\n    troxy policies create --name "Block large" --action BLOCK --field amount --operator gte --value 500\n    troxy policies create --name "Block Amazon" --action BLOCK --field merchant_name --operator contains --value amazon\n    troxy policies create --name "Cap spend" --action BLOCK --mcp "My Laptop" --field amount --operator gte --value 200\n`,
+  enable:   `  troxy policies enable --name <policy-name>\n\n  Enables a disabled policy.\n\n  Options:\n    --name   Name of the policy to enable\n`,
+  disable:  `  troxy policies disable --name <policy-name>\n\n  Disables a policy without deleting it.\n\n  Options:\n    --name   Name of the policy to disable\n`,
+  delete:   `  troxy policies delete --name <policy-name>\n\n  Permanently deletes a policy.\n\n  Options:\n    --name   Name of the policy to delete\n`,
+};
+
 export async function runPolicies([sub, ...args], flags) {
+  if (flags.help || flags.h) {
+    console.log('\n' + (HELP[sub] || `  troxy policies <subcommand> [options]\n\n  Subcommands:\n    list       List all policies\n    describe   Show details for a policy\n    create     Create a new policy\n    enable     Enable a policy\n    disable    Disable a policy\n    delete     Delete a policy\n\n  Run 'troxy policies <subcommand> --help' for subcommand help.\n`));
+    process.exit(0);
+  }
+
   // Read-only subcommands work with a login session
   const readOnly = !sub || sub === 'list' || sub === 'describe';
 

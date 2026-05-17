@@ -87,6 +87,26 @@ switch (command) {
     break;
 
   case 'rotate-key': {
+    if (flags.help || flags.h) {
+      console.log(`
+  troxy rotate-key [options]
+
+  Creates a new MCP API key, saves it to ~/.troxy/config.json, and optionally
+  revokes the old key. Login required.
+
+  Options:
+    --name <name>    Name for the new key (default: "Rotated key")
+    --revoke-old     Revoke the old key immediately after creating the new one
+
+  Examples:
+    troxy rotate-key
+    troxy rotate-key --revoke-old
+    troxy rotate-key --name "My Agent Key" --revoke-old
+
+  After rotating: update TROXY_API_KEY in your MCP config and restart the MCP server.
+`);
+      process.exit(0);
+    }
     const jwt = requireJwt();
     const { loadConfig, saveConfig } = await import('../src/config.js');
     const oldKey    = loadConfig()?.apiKey;
@@ -143,6 +163,28 @@ switch (command) {
 
   // ── Simulate a payment evaluation ────────────────────────────
   case 'pay': {
+    if (flags.help || flags.h) {
+      console.log(`
+  troxy pay --merchant <name> --amount <n> [options]
+
+  Simulates a payment evaluation request — identical to what your AI agent sends.
+  Use this to test your policies. Login required.
+
+  Required:
+    --merchant <name>   Merchant name (e.g. "Amazon")
+    --amount <n>        Payment amount in USD
+
+  Optional:
+    --card <alias>      Card alias (default: "Work")
+    --category <cat>    Merchant category (e.g. travel, software, food)
+
+  Examples:
+    troxy pay --merchant "Amazon" --amount 50
+    troxy pay --merchant "Amazon" --amount 350 --card "Work"
+    troxy pay --merchant "Delta"  --amount 250 --card "Work" --category travel
+`);
+      process.exit(0);
+    }
     requireJwt();
     const apiKey   = loadConfig()?.apiKey || process.env.TROXY_API_KEY;
     if (!apiKey) { console.error('  No API key. Run: troxy init --key txy-...\n'); process.exit(1); }
@@ -179,6 +221,21 @@ switch (command) {
     break;
 
   case 'insights': {
+    if (flags.help || flags.h) {
+      console.log(`
+  troxy insights [options]
+
+  Shows a spending and decision summary for a given period. Login required.
+
+  Options:
+    --period <days>   Number of days to look back (default: 30)
+
+  Examples:
+    troxy insights
+    troxy insights --period 7
+`);
+      process.exit(0);
+    }
     const jwt    = requireJwt();
     const period = Number(flags.period || 30);
     const data   = await api.agentInsights(jwt, period);

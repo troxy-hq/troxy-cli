@@ -3,7 +3,17 @@ import { loadConfig, saveConfig }  from './config.js';
 import { requireJwt }              from './auth.js';
 import { table }                   from './print.js';
 
+const HELP = {
+  list:   `  troxy mcps list\n\n  Lists all MCP connections on your account — name, prefix, status, last seen,\n  policies assigned, default action, and which one is this machine.\n`,
+  rename: `  troxy mcps rename --name <new-name>\n\n  Renames this machine's MCP. The new name appears in the dashboard immediately.\n\n  Options:\n    --name   New name for this machine's MCP\n\n  Example:\n    troxy mcps rename --name "My Laptop"\n`,
+};
+
 export async function runMcps([sub], flags) {
+  if (flags.help || flags.h) {
+    console.log('\n' + (HELP[sub] || `  troxy mcps <subcommand> [options]\n\n  Subcommands:\n    list     List all MCP connections\n    rename   Rename this machine's MCP\n\n  Run 'troxy mcps <subcommand> --help' for subcommand help.\n`));
+    process.exit(0);
+  }
+
   switch (sub || 'list') {
     case 'list': {
       const jwt = requireJwt();

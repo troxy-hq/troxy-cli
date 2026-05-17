@@ -5,6 +5,24 @@ import { table }             from './print.js';
 const ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
 
 export async function runActivity(flags) {
+  if (flags.help || flags.h) {
+    console.log(`
+  troxy activity [options]
+
+  Shows recent payment decisions across all your MCPs. Login required.
+
+  Options:
+    --limit <n>   Number of rows to show (default: 20, max: 200)
+    --mine        Show only decisions from this machine's MCP
+
+  Examples:
+    troxy activity
+    troxy activity --limit 50
+    troxy activity --mine
+`);
+    process.exit(0);
+  }
+
   const jwt   = requireJwt();
   const limit = Number(flags.limit || 20);
   const mine  = !!flags.mine;
