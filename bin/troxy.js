@@ -309,6 +309,7 @@ switch (command) {
     troxy policies list
     troxy policies describe --name "Block Amazon"
     troxy policies create --name "X" --action BLOCK --field amount --operator gte --value 500
+    troxy policies create --name "X" --action BLOCK --mcp "My Laptop"   (scoped to one MCP)
     troxy policies enable  --name "X"
     troxy policies disable --name "X"
     troxy policies delete  --name "X"

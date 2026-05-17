@@ -82,8 +82,30 @@ export async function runPolicies([sub, ...args], flags) {
         if (flags.value2) cond.value2 = flags.value2;
         conditions.push(cond);
       }
-      const policy = await api.createPolicy(jwt, { name, action, conditions, enabled: true });
-      console.log(`\n  Policy "${policy.name}" created ✓  (priority: ${policy.priority})\n`);
+
+      // --mcp <name>: scope policy to a specific MCP instead of all
+      let isGlobal = true;
+      let mcpIds = [];
+      if (flags.mcp) {
+        const { tokens = [] } = await api.listTokens(jwt);
+        const needle = flags.mcp.toLowerCase();
+        const match = tokens.find(t =>
+          (t.name  && t.name.toLowerCase()  === needle) ||
+          (t.agent_name && t.agent_name.toLowerCase() === needle) ||
+          (t.prefix && t.prefix.toLowerCase().startsWith(needle))
+        );
+        if (!match) {
+          console.error(`\n  MCP "${flags.mcp}" not found. Run: troxy mcps list\n`);
+          process.exit(1);
+        }
+        isGlobal = false;
+        mcpIds   = [match.id];
+        console.log(`\n  Scoping to MCP: ${match.name || match.agent_name || match.prefix}`);
+      }
+
+      const policy = await api.createPolicy(jwt, { name, action, conditions, enabled: true, global: isGlobal, mcp_ids: mcpIds });
+      const scope  = isGlobal ? 'all MCPs' : (policy.mcps?.[0]?.name || flags.mcp);
+      console.log(`\n  Policy "${policy.name}" created ✓  (priority: ${policy.priority}, scope: ${scope})\n`);
       break;
     }
 
