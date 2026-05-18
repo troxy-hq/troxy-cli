@@ -66,11 +66,6 @@ export const api = {
   resumeToken: (jwt, id)       => request('POST',  `/tokens/${id}/resume`, { jwt }),
   renameToken: (jwt, id, name) => request('PATCH', `/tokens/${id}/name`,   { jwt, body: { name } }),
 
-  // MCP daemon endpoints (agent API key — used by MCP server only)
-  mcpPause:  (apiKey) => request('POST',  '/mcp/pause',  { apiKey }),
-  mcpResume: (apiKey) => request('POST',  '/mcp/resume', { apiKey }),
-  mcpRename: (apiKey, name) => request('PATCH', '/mcp/name', { apiKey, body: { name } }),
-
   // Agent read-only API (JWT session auth — run: troxy login)
   agentStatus:   (jwt)              => request('GET', '/agent/status',   { jwt }),
   agentPolicies: (jwt)              => request('GET', '/agent/policies',  { jwt }),
