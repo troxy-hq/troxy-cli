@@ -76,7 +76,7 @@ export const api = {
   agentPolicies: (jwt)              => request('GET', '/agent/policies',  { jwt }),
   agentMcps:     (jwt)              => request('GET', '/agent/mcps',      { jwt }),
   agentCards:    (jwt)              => request('GET', '/agent/cards',      { jwt }),
-  agentActivity: (jwt, limit, mine) => request('GET', `/agent/activity?limit=${limit || 20}${mine ? '&mine=true' : ''}`, { jwt }),
+  agentActivity: (jwt, limit, mine, tokenPrefix) => request('GET', `/agent/activity?limit=${limit || 20}${mine ? `&mine=true&token_prefix=${encodeURIComponent(tokenPrefix || '')}` : ''}`, { jwt }),
   agentInsights: (jwt, period)      => request('GET', `/agent/insights?period=${period || 30}`, { jwt }),
 };
 

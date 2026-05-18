@@ -1,5 +1,6 @@
 import { api }               from './api.js';
 import { requireJwt }        from './auth.js';
+import { loadConfig }        from './config.js';
 import { table }             from './print.js';
 
 const ICON = { ALLOW: '✓', BLOCK: '✗', ESCALATE: '⏳', NOTIFY: '~' };
@@ -23,11 +24,12 @@ export async function runActivity(flags) {
     process.exit(0);
   }
 
-  const jwt   = requireJwt();
-  const limit = Number(flags.limit || 20);
-  const mine  = !!flags.mine;
+  const jwt         = requireJwt();
+  const limit       = Number(flags.limit || 20);
+  const mine        = !!flags.mine;
+  const tokenPrefix = mine ? (loadConfig()?.apiKey || '').substring(0, 11) : undefined;
 
-  const data = await api.agentActivity(jwt, limit, mine);
+  const data = await api.agentActivity(jwt, limit, mine, tokenPrefix);
   const rows = data?.activity || [];
 
   if (!rows.length) { console.log('\n  No activity yet.\n'); return; }
