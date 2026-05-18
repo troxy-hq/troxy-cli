@@ -309,10 +309,52 @@ switch (command) {
       const { version: latest } = await res.json();
       if (current !== latest) {
         console.log(`  ⚠  New version available: ${latest} (you have ${current})`);
-        console.log(`     Update with: sudo npm install -g troxy-cli@latest\n`);
+        console.log(`     Run: troxy update\n`);
       }
     } catch {}
 
+    break;
+  }
+
+  // ── Self-update ───────────────────────────────────────────────
+  case 'update': {
+    const { execSync } = await import('child_process');
+    const { createRequire } = await import('module');
+    const req = createRequire(import.meta.url);
+    const { version: current } = req('../package.json');
+
+    process.stdout.write('\n  Checking for updates... ');
+    let latest;
+    try {
+      const res = await fetch('https://registry.npmjs.org/troxy-cli/latest', { signal: AbortSignal.timeout(5000) });
+      ({ version: latest } = await res.json());
+    } catch {
+      console.log('✗');
+      console.error('\n  Could not reach npm registry. Check your connection.\n');
+      process.exit(1);
+    }
+
+    if (current === latest) {
+      console.log(`already up to date (${current})\n`);
+      break;
+    }
+
+    console.log(`${current} → ${latest}`);
+    process.stdout.write('  Installing... ');
+    try {
+      execSync('npm install -g troxy-cli@latest', { stdio: 'pipe' });
+      console.log(`✓\n\n  Updated to ${latest}. Restart your terminal to use the new version.\n`);
+    } catch (err) {
+      const stderr = err.stderr?.toString() || err.message || '';
+      if (stderr.includes('EACCES') || stderr.includes('permission')) {
+        console.log('✗');
+        console.error('\n  Permission denied. Try:\n\n  sudo troxy update\n');
+      } else {
+        console.log('✗');
+        console.error(`\n  ${stderr || err.message}\n`);
+      }
+      process.exit(1);
+    }
     break;
   }
 
@@ -333,6 +375,7 @@ switch (command) {
     troxy init --key <api-key>     Connect this machine as an MCP + save key
     troxy uninstall                Remove Troxy from this machine
     troxy status                   API health + MCP status (no login needed)
+    troxy update                   Update to the latest version
 
   Everything else requires: troxy login
 
